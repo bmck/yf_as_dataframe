@@ -11,7 +11,7 @@
 **Yahoo!, Y!Finance, and Yahoo! finance are registered trademarks of
 Yahoo, Inc.**
 
-yfinance is **not** affiliated, endorsed, or vetted by Yahoo, Inc. It's
+yfinrb is **not** affiliated, endorsed, or vetted by Yahoo, Inc. It is
 an open-source tool that uses Yahoo's publicly available APIs, and is
 intended for research and educational purposes.
 
@@ -132,7 +132,7 @@ The **yfinrb** gem is available as open source under the **MIT Software License*
 the [LICENSE.txt](./LICENSE.txt) file in the release for details.
 
 
-AGAIN - yfinance is **not** affiliated, endorsed, or vetted by Yahoo, Inc. It's
+AGAIN - yfinrb is **not** affiliated, endorsed, or vetted by Yahoo, Inc. It's
 an open-source tool that uses Yahoo's publicly available APIs, and is
 intended for research and educational purposes. You should refer to Yahoo!'s terms of use
 ([here](https://policies.yahoo.com/us/en/yahoo/terms/product-atos/apiforydn/index.htm),
