@@ -7,6 +7,4 @@ gemspec
 
 gem "rake", "~> 13.0"
 
-gem "none", "~> "
-
 gem "rubocop", "~> 1.21"

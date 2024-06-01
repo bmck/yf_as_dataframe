@@ -1,8 +1,102 @@
 # Yfinrb
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/yfinrb`. To experiment with that code, run `bin/console` for an interactive prompt.
+# Download market data from Yahoo! Finance's API
 
-TODO: Delete this and the text above, and describe your gem
+<table border=1 cellpadding=10><tr><td>
+
+#### \*\*\* IMPORTANT LEGAL DISCLAIMER \*\*\*
+
+---
+
+**Yahoo!, Y!Finance, and Yahoo! finance are registered trademarks of
+Yahoo, Inc.**
+
+yfinance is **not** affiliated, endorsed, or vetted by Yahoo, Inc. It's
+an open-source tool that uses Yahoo's publicly available APIs, and is
+intended for research and educational purposes.
+
+**You should refer to Yahoo!'s terms of use**
+([here](https://policies.yahoo.com/us/en/yahoo/terms/product-atos/apiforydn/index.htm),
+[here](https://legal.yahoo.com/us/en/yahoo/terms/otos/index.html), and
+[here](https://policies.yahoo.com/us/en/yahoo/terms/index.htm)) **for
+details on your rights to use the actual data downloaded. Remember - the
+Yahoo! finance API is intended for personal use only.**
+
+</td></tr></table>
+
+---
+
+## Quick Start
+
+### The Ticker module
+
+The `Ticker` class, which allows you to access ticker data:
+
+```ruby
+
+msft = Yfinrb::Ticker("MSFT")
+
+# get all stock info
+msft.info
+
+# get historical market data
+hist = msft.history(period="1mo")
+
+# show meta information about the history (requires history() to be called first)
+msft.history_metadata
+
+# show actions (dividends, splits, capital gains)
+msft.actions
+msft.dividends
+msft.splits
+msft.capital_gains  # only for mutual funds & etfs
+
+# show share count
+msft.get_shares_full(start="2022-01-01", end=None)
+
+# show financials:
+# - income statement
+msft.income_stmt
+msft.quarterly_income_stmt
+# - balance sheet
+msft.balance_sheet
+msft.quarterly_balance_sheet
+# - cash flow statement
+msft.cashflow
+msft.quarterly_cashflow
+
+# show holders
+msft.major_holders
+msft.institutional_holders
+msft.mutualfund_holders
+msft.insider_transactions
+msft.insider_purchases
+msft.insider_roster_holders
+
+# show recommendations
+msft.recommendations
+msft.recommendations_summary
+msft.upgrades_downgrades
+
+# Show future and historic earnings dates, returns at most next 4 quarters and last 8 quarters by default.
+msft.earnings_dates
+
+# show ISIN code
+# ISIN = International Securities Identification Number
+msft.isin
+
+# show options expirations
+msft.options
+
+# show news
+msft.news
+
+# get option chain for specific expiration
+opt = msft.option_chain('YYYY-MM-DD')
+# data available via: opt.calls, opt.puts
+```
+
+---
 
 ## Installation
 
@@ -20,20 +114,30 @@ Or install it yourself as:
 
     $ gem install yfinrb
 
-## Usage
-
-TODO: Write usage instructions here
+---
 
 ## Development
-
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake none` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
 To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/yfinrb.
+Bug reports and pull requests are welcome on GitHub at https://github.com/bmck/yfinrb.
 
-## License
+---
 
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+### Legal Stuff
+
+The **yfinrb** gem is available as open source under the **MIT Software License** (https://opensource.org/licenses/MIT). See
+the [LICENSE.txt](./LICENSE.txt) file in the release for details.
+
+
+AGAIN - yfinance is **not** affiliated, endorsed, or vetted by Yahoo, Inc. It's
+an open-source tool that uses Yahoo's publicly available APIs, and is
+intended for research and educational purposes. You should refer to Yahoo!'s terms of use
+([here](https://policies.yahoo.com/us/en/yahoo/terms/product-atos/apiforydn/index.htm),
+[here](https://legal.yahoo.com/us/en/yahoo/terms/otos/index.html), and
+[here](https://policies.yahoo.com/us/en/yahoo/terms/index.htm)) for
+details on your rights to use the actual data downloaded.
+
+---
