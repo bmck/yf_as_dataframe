@@ -40,7 +40,8 @@ msft = Yfinrb::Ticker("MSFT")
 msft.info
 
 # get historical market data
-hist = msft.history(period="1mo")
+hist = msft.history(period: "1mo")
+hist2 = msft.history(start: '2020-01-01', fin: '2021-12-31')
 
 # show meta information about the history (requires history() to be called first)
 msft.history_metadata
@@ -52,7 +53,7 @@ msft.splits
 msft.capital_gains  # only for mutual funds & etfs
 
 # show share count
-msft.get_shares_full(start="2022-01-01", end=None)
+msft.get_shares_full(start: "2022-01-01", fin: nil)
 
 # show financials:
 # - income statement
@@ -92,7 +93,7 @@ msft.options
 msft.news
 
 # get option chain for specific expiration
-opt = msft.option_chain('YYYY-MM-DD')
+opt = msft.option_chain('2026-12-18')
 # data available via: opt.calls, opt.puts
 ```
 

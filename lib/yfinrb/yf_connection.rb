@@ -73,11 +73,11 @@ class Yfin
 
 
     def get_raw_json(url, user_agent_headers=nil, params=nil)
-      Rails.logger.info { "url = #{url.inspect}" }
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} url = #{url.inspect}" }
       response = get(url, user_agent_headers, params)
-      Rails.logger.info { "response = #{response.inspect}" }
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} response = #{response.inspect}" }
       # response.raise_for_status()
-      return response.json()
+      return response   #.json()
     end
 
 

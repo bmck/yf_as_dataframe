@@ -7,7 +7,7 @@ class Yfin
     include YfConnection
 
     attr_accessor :tz, :proxy, :isin, :timeout
-    attr_reader :error_message
+    attr_reader :error_message, :ticker
 
     class YahooFinanceException < Exception
     end
@@ -40,7 +40,7 @@ class Yfin
     include Quote
     include Financials
 
-
+    alias_method :symbol, :ticker
 
 
     def shares_full(start: nil, fin: nil)

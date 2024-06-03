@@ -118,12 +118,13 @@ class Yfin
 
       raise YfinException("No valid modules provided, see available modules using `valid_modules`") if modules.empty?
 
-      params_dict = {"modules": modules, "corsDomain": "finance.yahoo.com", "formatted": "false", "symbol": symbol}
+      params_dict = {"modules": modules.join(','), "corsDomain": "finance.yahoo.com", "formatted": "false", "symbol": symbol}
 
       begin
         result = get_raw_json(QUOTE_SUMMARY_URL + "/#{symbol}", user_agent_headers=user_agent_headers, params=params_dict)
-      rescue HTTPError => e
-        Rails.logger.error(str(e))
+        # Rails.logger.info { "#{__FILE__}:#{__LINE__} result = #{result.inspect}" }
+      rescue Exception => e
+        Rails.logger.error("ERROR: #{e.message}")
         return nil
       end
       return result
@@ -152,7 +153,6 @@ class Yfin
 
     def _fetch_complementary()   #(proxy) # (self, proxy)
       return if @already_fetched_complementary
-      @already_fetched_complementary = true
 
       # self._scrape(proxy)  # decrypt broken
       self._fetch_info() #(proxy)
@@ -190,15 +190,17 @@ class Yfin
         start = (DateTime.now.utc.midnight - 6.months).to_i #datetime.timedelta(days=365 // 2)
         # start = int(start.timestamp())
 
-        ending = DateTime.tomorrow.utc.midnight.to_i
+        ending = DateTime.now.utc.tomorrow.midnight.to_i
         # ending = int(ending.timestamp())
-        url += f"&period1={start}&period2={ending}"
+        url += "&period1=#{start}&period2=#{ending}"
 
+        # Rails.logger.info { "#{__FILE__}:#{__LINE__} url = #{url}" }
         json_str = get(url).parsed_response # , proxy=proxy).parsed_response   #@data.cache_get(url=url, proxy=proxy).text
-        # json_data = json.loads(json_str)
+        json_data = json_str #json.loads(json_str)
+        # Rails.logger.info { "#{__FILE__}:#{__LINE__} json_data = #{json_data.inspect}" }
         json_result = json_data.try(:[],"timeseries") or json_data.try(:[], "finance")
         unless json_result["error"].nil?
-          raise YfinException("Failed to parse json response from Yahoo Finance: " + str(json_result["error"]))
+          raise YfinException("Failed to parse json response from Yahoo Finance: #{json_result["error"]}")
 
           keys.each do |k|
             keydict = json_result["result"][0]
@@ -207,12 +209,14 @@ class Yfin
           end
         end
       end
+
+      @already_fetched_complementary = true
     end
 
     def _fetch_calendar
       begin
         # secFilings return too old data, so not requesting it for now
-        result = self._fetch(modules=['calendarEvents']) #(@proxy, modules=['calendarEvents'])
+        result = self._fetch(['calendarEvents']) #(@proxy, modules=['calendarEvents'])
         if result.nil?
           @calendar = {}
           return
@@ -248,16 +252,21 @@ class Yfin
     def _fetch_info()
       return if @already_fetched
 
-      @already_fetched = true
       modules = ['financialData', 'quoteType', 'defaultKeyStatistics', 'assetProfile', 'summaryDetail']
 
-      result = self._fetch(modules=modules)
-      if result.nil?
+      result = _fetch(modules)
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} result = #{result.inspect}" }
+      if result.parsed_response.nil?
         @info = {}
         return
       end
 
-      result["quoteSummary"]["result"][0]["symbol"] = @symbol
+      result["quoteSummary"]["result"][0]["symbol"] = symbol
+
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} result[quoteSummary][result] = #{result["quoteSummary"]["result"].inspect}" }
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} result[quoteSummary][result].first.keys = #{result["quoteSummary"]["result"].first.keys.inspect}" }
+      query1_info = result["quoteSummary"]["result"].first
+
       # Likely need to decipher and restore the following
       # query1_info = next(
       #   (info for info in result.get("quoteSummary", {}).get("result", []) if info["symbol"] == @symbol),
@@ -267,7 +276,7 @@ class Yfin
       # Most keys that appear in multiple dicts have same value. Except 'maxAge' because
       # Yahoo not consistent with days vs seconds. Fix it here:
 
-      query1_info.each {|k|
+      query1_info.keys.each {|k|
         query1_info[k]["maxAge"] = 86400 if "maxAge".in?(query1_info[k]) && query1_info[k]["maxAge"] == 1
       }
 
@@ -281,6 +290,8 @@ class Yfin
       #           }
       #           # recursively format but only because of 'companyOfficers'
 
+      @info = query1_info
+      @already_fetched = true
     end
 
 

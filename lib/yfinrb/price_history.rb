@@ -38,7 +38,7 @@ class Yfin
       end_user = fin || DateTime.now
 
       params = _preprocess_params(start, fin, interval, period, prepost, raise_errors)
-      # Rails.logger.info { "#{__FILE__}:#{__LINE__} params=#{params.inspect}" }
+      Rails.logger.info { "#{__FILE__}:#{__LINE__} params=#{params.inspect}" }
 
       params_pretty = params.dup
 
@@ -47,7 +47,7 @@ class Yfin
       end
 
       data = _get_data(ticker, params, fin, raise_errors)
-      # Rails.logger.info { "#{__FILE__}:#{__LINE__} here" }
+      Rails.logger.info { "#{__FILE__}:#{__LINE__} here" }
 
       @history_metadata = data["chart"]["result"][0]["meta"] rescue {}
 
@@ -193,7 +193,7 @@ class Yfin
     end
 
 
-    def get_history_metadata
+    def history_metadata
       history(period: "1wk", interval: "1h", prepost: true) if @history_metadata.nil?
 
       if !@history_metadata_formatted
@@ -258,7 +258,7 @@ class Yfin
     def currency
       if @currency.nil?
 
-        md = get_history_metadata #(proxy=self.proxy)
+        md = history_metadata #(proxy=self.proxy)
         @currency = md["currency"]
       end
       return @currency
@@ -267,7 +267,7 @@ class Yfin
     def quote_type
       if @quote_type.nil?
 
-        md = get_history_metadata #(proxy=self.proxy)
+        md = history_metadata #(proxy=self.proxy)
         @quote_type = md["instrumentType"]
       end
       return @quote_type
@@ -546,57 +546,50 @@ class Yfin
     private
 
     def _preprocess_params(start, fin, interval, period, prepost, raise_errors)
-      # Rails.logger.info { "#{__FILE__}:#{__LINE__} start = #{start.inspect}, fin = #{fin.inspect}, interval = #{interval}, period = #{period}, tz = #{tz}, prepost = #{prepost}, raise_errors = #{raise_errors}" }
+       # Rails.logger.info { "#{__FILE__}:#{__LINE__} start = #{start.inspect}, end_date = #{fin.inspect}, interval = #{interval}, period = #{period}, tz = #{tz}, prepost = #{prepost}, raise_errors = #{raise_errors}" }
 
-      params = {}
-      params["interval"] =  params["interval"] == "30m" ? "15m"  : interval.downcase
-      params["includePrePost"] = prepost
-      params["events"] = "div,splits,capitalGains"
-
-      if period.downcase == 'max'
-        fin = DateTime.now
-        start = fin - 99.years
-      
-      else
-        if start.nil? || period.nil? #|| period.downcase == "max"
-          if tz.nil?
-            err_msg = "No timezone found, symbol may be delisted"
-            # Yfin.shared_DFS[ticker] = Utils.empty_df
-            # Yfin.shared_ERRORS[ticker] = err_msg
-            if raise_errors
-              raise Exception.new("#{ticker}: #{err_msg}")
-            else
-              Rails.logger.error("#{ticker}: #{err_msg}")
-            end
-            return Utils.empty_df
-          end
-
-          fin = fin.nil? ? Time.now.to_i : Utils.parse_user_dt(fin, tz)
-          # Rails.logger.info { "#{__FILE__}:#{__LINE__} fin = #{fin.inspect}" }
-
-          if start.nil?
-            if interval == "1m"
-              start = fin - 604800
-            else
-              max_start_datetime = DateTime.now.utc - 99.years
-              start = max_start_datetime.to_i
-            end
+      if start || period.nil? || period.downcase == "max"
+        if tz.nil?
+          err_msg = "No timezone found, symbol may be delisted"
+          # Yfin.shared_DFS[@ticker] = Utils.empty_df
+          # Yfin.shared_ERRORS[@ticker] = err_msg
+          if raise_errors
+            raise Exception.new("#{@ticker}: #{err_msg}")
           else
-            start = Utils.parse_user_dt(start, tz)
+            Rails.logger.error("#{@ticker}: #{err_msg}")
           end
-
-          params["period1"] = start
-          params["period2"] = fin
-          # Rails.logger.info { "#{__FILE__}:#{__LINE__} params = #{params.inspect}" }
-
-        else
-          params["range"] = period.downcase 
-          # Rails.logger.info { "#{__FILE__}:#{__LINE__} params = #{params.inspect}" }
-
+          return Utils.empty_df
         end
+
+        fin = fin.nil? ? Time.now.to_i : Utils.parse_user_dt(fin, tz)
+        # Rails.logger.info { "#{__FILE__}:#{__LINE__} fin = #{fin.inspect}" }
+
+        if start.nil?
+          if interval == "1m"
+            start = fin - 1.week
+          else
+            max_start_datetime = DateTime.now - (99.years)
+            start = max_start_datetime.to_i
+          end
+        else
+          start = Utils.parse_user_dt(start, tz)
+        end
+
+        params = { "period1" => start, "period2" => fin }
+        Rails.logger.info { "#{__FILE__}:#{__LINE__} params = #{params.inspect}" }
+
+      else
+        period = period.downcase
+        params = { "range" => period }
+        Rails.logger.info { "#{__FILE__}:#{__LINE__} params = #{params.inspect}" }
       end
 
-      # Rails.logger.info { "#{__FILE__}:#{__LINE__} params = #{params.inspect}" }
+      params["interval"] = interval.downcase
+      params["includePrePost"] = prepost
+      params["interval"] = "15m" if params["interval"] == "30m"
+      params["events"] = "div,splits,capitalGains"
+
+      Rails.logger.info { "#{__FILE__}:#{__LINE__} params = #{params.inspect}" }
       return params
     end
 
