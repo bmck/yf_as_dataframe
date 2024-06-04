@@ -1,5 +1,6 @@
 class Yfin
   module Financials
+    include ActiveSupport::Inflector
 
     def self.included(base) # built-in Ruby hook for modules
       base.class_eval do
@@ -32,6 +33,7 @@ class Yfin
     alias_method :annual_balancesheet, :balance_sheet
 
     def cash_flow; _get_cash_flow(pretty: true, freq: 'yearly'); end
+    alias_method :cashflow, :cash_flow
     def quarterly_cash_flow; _get_cash_flow(pretty: true, freq: 'quarterly'); end
     alias_method :quarterly_cashflow, :quarterly_cash_flow
     alias_method :annual_cashflow, :cash_flow
@@ -48,22 +50,22 @@ class Yfin
     private
 
     def _get_cash_flow(as_dict: false, pretty: false, freq: "yearly")
-      data = _get_cash_flow_time_series(freq: freq)
+      data = _get_cash_flow_time_series(freq)
 
       if pretty
-      #   data = data.dup
-      #   data.index = Utils.camel2title(data.index, sep: ' ', acronyms: ["PPE"])
+        #   data = data.dup
+        #   data.index = Utils.camel2title(data.index, sep: ' ', acronyms: ["PPE"])
       end
 
       as_dict ? data.to_h : data
     end
 
     def _get_income_stmt(as_dict: false, pretty: false, freq: "yearly")
-      data = _get_income_time_series(freq: freq)
+      data = _get_income_time_series(freq)
 
       if pretty
-      #   data = data.dup
-      #   data.index = Utils.camel2title(data.index, sep: ' ', acronyms: ["EBIT", "EBITDA", "EPS", "NI"])
+        #   data = data.dup
+        #   data.index = Utils.camel2title(data.index, sep: ' ', acronyms: ["EBIT", "EBITDA", "EPS", "NI"])
       end
 
       as_dict ? data.to_h : data
@@ -71,11 +73,11 @@ class Yfin
 
 
     def _get_balance_sheet(as_dict: false, pretty: false, freq: "yearly")
-      data = _get_balance_sheet_time_series(freq: freq)
+      data = _get_balance_sheet_time_series(freq)
 
       if pretty
-      #   data = data.dup
-      #   data.index = Utils.camel2title(data.index, sep: ' ', acronyms: ["PPE"])
+        #   data = data.dup
+        #   data.index = Utils.camel2title(data.index, sep: ' ', acronyms: ["PPE"])
       end
 
       as_dict ? data.to_h : data
@@ -99,58 +101,72 @@ class Yfin
       res[freq]
     end
 
-    def _get_financials_time_series(timescale, keys)
+    def _get_financials_time_series(timescale, ts_keys)
+      Polars::Config.set_tbl_rows(-1)
       timescale_translation = { "yearly" => "annual", "quarterly" => "quarterly" }
       timescale = timescale_translation[timescale]
 
-      ts_url_base = "https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/#{@symbol}?symbol=#{@symbol}"
-      url = ts_url_base + "&type=" + keys.map { |k| "#{timescale}#{k}" }.join(",")
+      ts_url_base = "https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/#{symbol}?symbol=#{symbol}"
+      url = ts_url_base + "&type=" + ts_keys.map { |k| "#{timescale}#{k}" }.join(",")
       start_dt = DateTime.new(2016, 12, 31)
       end_dt = DateTime.now.tomorrow.midnight
       url += "&period1=#{start_dt.to_i}&period2=#{end_dt.to_i}"
 
       json_str = get(url).parsed_response
-      # json_data = JSON.parse(json_str)
       data_raw = json_str["timeseries"]["result"]
       data_raw.each { |d| d.delete("meta") }
 
-      timestamps = data_raw.flat_map { |x| x["timestamp"] }.uniq.sort
-      dates =  timestamps.to_datetime
-      df = Polars::DataFrame.new(columns: dates)
+      timestamps = data_raw.map{|d| d['timestamp']}.flatten.uniq.compact.uniq.sort.reverse
 
-      data_raw.each do |x|
-        x.each do |k, v|
-          next if k == "timestamp"
-          df.loc[k] = v.map { |entry| [Polars.Timestamp(entry["asOfDate"]), entry["reportedValue"]["raw"]] }.to_h
+      cols = [ :metric ] + timestamps.map{|ts| Time.at(ts).utc.to_date.to_s }
+      df = {}; cols.each {|c| df[c] = [] }
+      ts_keys.each { |k| df[:metric] <<  k.gsub(/([A-Z]+)/,' \1').strip }
+
+      timestamps.each do |ts|
+        ts_date = Time.at(ts).utc.to_date.to_s
+
+        ts_keys.each_with_index do |k, ndex|
+          l = "#{timescale}#{k}"
+          d = data_raw.detect{|dd| dd.key?(l) }
+          if d.nil?
+            df[ts_date] << ''
+            next
+          end
+          tv = d[l].detect{|dd| dd['asOfDate'] == ts_date }
+          df[ts_date] << (tv.nil? ? '' : tv['reportedValue']['raw'].to_s)
         end
+
       end
 
-      df = df[df.columns.sort.reverse]
-
+      df = Polars::DataFrame.new(df)
+      timestamps.map{|ts| Time.at(ts).utc.to_date.to_s }.each do |t|
+        puts t
+        df.replace(t, Polars::Series.new(df[t].cast(Polars::String)))
+      end
       df
     end
 
-    def _fetch_time_series(name, timescale)
+    def _fetch_time_series(nam, timescale)
       # Rails.logger.info { "#{__FILE__}:#{__LINE__}"}
-      allowed_names = FUNDAMENTALS_KEYS.keys
+      allowed_names = FUNDAMENTALS_KEYS.keys + [:income]
       allowed_timescales = ["yearly", "quarterly"]
 
-      raise ArgumentError, "Illegal argument: name must be one of: #{allowed_names}" unless allowed_names.include?(name.to_sym)
-      raise ArgumentError, "Illegal argument: timescale must be one of: #{allowed_timescales}" unless allowed_timescales.include?(timescale)
+      raise ArgumentError, "Illegal argument: name (#{nam}) must be one of: #{allowed_names}" unless allowed_names.include?(nam.to_sym)
+      raise ArgumentError, "Illegal argument: timescale (#{timescale}) must be one of: #{allowed_timescales}" unless allowed_timescales.include?(timescale)
 
       begin
-        statement = _create_financials_table(name, timescale)
+        statement = _create_financials_table(nam, timescale)
         return statement unless statement.nil?
       rescue Yfin::YfinDataException => e
-        Rails.logger.error {"#{@symbol}: Failed to create #{name} financials table for reason: #{e}"}
+        Rails.logger.error {"#{@symbol}: Failed to create #{nam} financials table for reason: #{e}"}
       end
       Polars::DataFrame.new()
     end
 
-    def _create_financials_table(name, timescale)
-      name = "financials" if name == "income"
+    def _create_financials_table(nam, timescale)
+      nam = "financials" if nam == "income"
 
-      keys = FUNDAMENTALS_KEYS[name.to_sym]
+      keys = FUNDAMENTALS_KEYS[nam.to_sym]
       begin
         _get_financials_time_series(timescale, keys)
       rescue StandardError

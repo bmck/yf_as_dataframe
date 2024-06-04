@@ -53,7 +53,7 @@ msft.splits
 msft.capital_gains  # only for mutual funds & etfs
 
 # show share count
-msft.get_shares_full(start: "2022-01-01", fin: nil)
+msft.shares_full(start: "2022-01-01", fin: nil)
 
 # show financials:
 # - income statement

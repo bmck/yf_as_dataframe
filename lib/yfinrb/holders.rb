@@ -89,10 +89,41 @@ class Yfin
 
     private
 
+    def _fetch_for_parse(params)  #(self, proxy, modules: list)
+      # raise YahooFinanceException("Should provide a list of modules, see available modules using `valid_modules`") if !modules.is_a?(Array)
+
+      # modules = modules.intersection(QUOTE_SUMMARY_VALID_MODULES)  #[m for m in modules if m in quote_summary_valid_modules])
+
+      modules = params[:modules]
+
+      raise YahooFinanceException("No valid modules provided.") if modules.empty?
+
+      params_dict = {"modules": modules, "corsDomain": "finance.yahoo.com", "formatted": "false", "symbol": symbol}
+
+      begin
+        result = get_raw_json(QUOTE_SUMMARY_URL + "/#{symbol}", user_agent_headers=user_agent_headers, params=params_dict)
+        # Rails.logger.info { "#{__FILE__}:#{__LINE__} result = #{result.inspect}" }
+      rescue Exception => e
+        Rails.logger.error("ERROR: #{e.message}")
+        return nil
+      end
+      return result
+    end
+
+    # def _fetch_for_parse(params)
+    #   url = "#{QUOTE_SUMMARY_URL}#{symbol}"
+    #   Rails.logger.info { "#{__FILE__}:#{__LINE__} url: #{url}, params = #{params.inspect}" }
+    #   get(url).parsed_response
+
+    #   # JSON.parse(URI.open(url, proxy: proxy, 'User-Agent' => 'Mozilla/5.0 (compatible; yahoo-finance2/0.0.1)').read(query: params))
+    # end
+
     def _fetch_and_parse
-      modules = %w[institutionOwnership fundOwnership majorDirectHolders majorHoldersBreakdown insiderTransactions insiderHolders netSharePurchaseActivity].join(',')
+      modules = ['institutionOwnership', 'fundOwnership', 'majorDirectHolders', 'majorHoldersBreakdown', 
+        'insiderTransactions', 'insiderHolders', 'netSharePurchaseActivity'].join(',')
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} modules = #{modules.inspect}"}
       params = { modules: modules, corsDomain: 'finance.yahoo.com', formatted: 'false' }
-      result = _fetch(params)
+      result = _fetch_for_parse(params)
 
       _parse_result(result)
     rescue OpenURI::HTTPError => e
@@ -107,15 +138,9 @@ class Yfin
       @insider_roster = []
     end
 
-    def _fetch(params)
-      url = "#{QUOTE_SUMMARY_URL}#{ticker}"
-      # Rails.logger.info { "#{__FILE__}:#{__LINE__} url: #{url}" }
-
-      JSON.parse(URI.open(url, proxy: proxy, 'User-Agent' => 'Mozilla/5.0 (compatible; yahoo-finance2/0.0.1)').read(query: params))
-    end
-
     def _parse_result(result)
-      data = result.dig('quoteSummary', 'result', 0)
+      data = result.parsed_response['quoteSummary']['result'].first #.dig('quoteSummary', 'result', 0)
+      Rails.logger.info { "#{__FILE__}:#{__LINE__} data = #{data.inspect}" }
       _parse_institution_ownership(data['institutionOwnership'])
       _parse_fund_ownership(data['fundOwnership'])
       _parse_major_holders_breakdown(data['majorHoldersBreakdown'])

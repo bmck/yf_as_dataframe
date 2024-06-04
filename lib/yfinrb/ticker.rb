@@ -42,6 +42,7 @@ class Yfin
 
     alias_method :symbol, :ticker
 
+    def symbol; @ticker; end
 
     def shares_full(start: nil, fin: nil)
       logger = Rails.logger
@@ -210,7 +211,7 @@ class Yfin
         download_options(@expirations[date])
       end
 
-      OpenStruct.new(
+      df = OpenStruct.new(
         calls: _options_to_df(options['calls'], tz),
         puts: _options_to_df(options['puts'], tz),
         underlying: options['underlying']
@@ -267,13 +268,13 @@ class Yfin
       end
 
       q = ticker
-
+      @info ||= info
       return nil if @info.nil?
 
-      q = @info['shortName'] if @info.key?("shortName")
+      # q = @info['quoteType'].try(:[],'shortName') # if @info.key?("shortName")
 
-      url = "https://markets.businessinsider.com/ajax/SearchController_Suggest?max_results=25&query=#{urlencode(q)}"
-      data = get(url: url).parsed_response
+      url = "https://markets.businessinsider.com/ajax/SearchController_Suggest?max_results=25&query=#{(q)}"
+      data = get(url).parsed_response
 
       search_str = "\"#{ticker}|"
       if !data.include?(search_str)

@@ -40,19 +40,21 @@ class Yfin
     end
 
     def recommendations
+      Polars::Config.set_tbl_rows(-1)
       if @recommendations.nil?
 
-        result = _fetch(['recommendationTrend'])
-        if result.nil?
-          @recommendations = Utils.empty_df()  #Polars::DataFrame()
-        else
+        result = _fetch(['recommendationTrend']).parsed_response
+        # Rails.logger.info { "#{__FILE__}:#{__LINE__} result = #{result.inspect}" }
+        # if result.nil?
+        #   @recommendations = Utils.empty_df()  #Polars::DataFrame()
+        # else
           begin
             data = result["quoteSummary"]["result"][0]["recommendationTrend"]["trend"]
           rescue KeyError, IndexError => e
             raise YfinDataException(f"Failed to parse json response from Yahoo Finance: #{e.result}")
           end
-          @recommendations = Utils.empty_df(data) #Polars::DataFrame(data)
-        end
+          @recommendations = Polars::DataFrame.new(data)
+        # end
       end
       return @recommendations
     end
@@ -61,18 +63,20 @@ class Yfin
     alias_method :recommendations_summary, :recommendations
 
     def upgrades_downgrades
+      Polars::Config.set_tbl_rows(-1)
       if @upgrades_downgrades.nil?
-        result = _fetch(['upgradeDowngradeHistory'])
+        result = _fetch(['upgradeDowngradeHistory']).parsed_response
+        # Rails.logger.info { "#{__FILE__}:#{__LINE__} result = #{result.inspect}" }
 
-        if result.nil?
-          @upgrades_downgrades = Utils.empty_df()  #Polars::DataFrame()
-        else
+        # if result.nil?
+        #   @upgrades_downgrades = Utils.empty_df()  #Polars::DataFrame()
+        # else
           begin
             data = result["quoteSummary"]["result"][0]["upgradeDowngradeHistory"]["history"]
 
-            raise YfinDataException("No upgrade/downgrade history found for #{ticker.symbol}") if len(data).zero?
+            raise YfinDataException("No upgrade/downgrade history found for #{ticker.symbol}") if (data).length.zero?
 
-            df = Polars::DataFrame(data)
+            df = Polars::DataFrame.new(data)
             df.rename({"epochGradeDate" => "GradeDate", 'firm' => 'Firm', 'toGrade' => 'ToGrade', 'fromGrade' => 'FromGrade', 'action' => 'Action'})
             # df.set_index('GradeDate', inplace=true)
             # df.index = pd.to_datetime(df.index, unit='s')
@@ -80,7 +84,7 @@ class Yfin
           rescue KeyError, IndexError => e
             raise YfinDataException("Failed to parse json response from Yahoo Finance: #{e.result}")
           end
-        end
+        # end
       end
       return @upgrades_downgrades
     end
@@ -112,11 +116,11 @@ class Yfin
     private
 
     def _fetch(modules)  #(self, proxy, modules: list)
-      raise YfinException("Should provide a list of modules, see available modules using `valid_modules`") if !modules.is_a?(Array)
+      # raise YahooFinanceException("Should provide a list of modules, see available modules using `valid_modules`") if !modules.is_a?(Array)
 
       modules = modules.intersection(QUOTE_SUMMARY_VALID_MODULES)  #[m for m in modules if m in quote_summary_valid_modules])
 
-      raise YfinException("No valid modules provided, see available modules using `valid_modules`") if modules.empty?
+      raise YahooFinanceException("No valid modules provided.") if modules.empty?
 
       params_dict = {"modules": modules.join(','), "corsDomain": "finance.yahoo.com", "formatted": "false", "symbol": symbol}
 
