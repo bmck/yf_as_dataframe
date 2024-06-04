@@ -38,7 +38,7 @@ class Yfin
       end_user = fin || DateTime.now
 
       params = _preprocess_params(start, fin, interval, period, prepost, raise_errors)
-      Rails.logger.info { "#{__FILE__}:#{__LINE__} params=#{params.inspect}" }
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} params=#{params.inspect}" }
 
       params_pretty = params.dup
 
@@ -47,9 +47,15 @@ class Yfin
       end
 
       data = _get_data(ticker, params, fin, raise_errors)
-      Rails.logger.info { "#{__FILE__}:#{__LINE__} here" }
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} data[chart][result].first.keys = #{data['chart']['result'].first.keys.inspect}" }
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} data[chart][result].first[events] = #{data['chart']['result'].first['events'].inspect}" }
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} data[chart][result].first[events][dividends] = #{data['chart']['result'].first['events']['dividends'].inspect}" }
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} data[chart][result].first[events][splits] = #{data['chart']['result'].first['events']['splits'].inspect}" }
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} data = #{data.inspect}" }
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} @history = #{@history.inspect}" }
 
       @history_metadata = data["chart"]["result"][0]["meta"] rescue {}
+      @history = data["chart"]["result"][0]
 
       intraday = params["interval"][-1] == "m" || params["interval"][-1] == "h"
 
@@ -72,10 +78,12 @@ class Yfin
         end
         return Utils.empty_df
       end
-      # Rails.logger.info { "#{__FILE__}:#{__LINE__} here" }
 
       # begin
-      quotes = _parse_quotes(data["chart"]["result"][0])
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} data[chart][result][0] = #{data["chart"]["result"][0].inspect}" }
+      quotes = _parse_quotes(data["chart"]["result"][0], interval)
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} @history = #{@history.inspect}" }
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} data = #{data.inspect}" }
 
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} quotes=#{quotes.inspect}" }
       # if fin && !quotes.empty?
@@ -99,31 +107,14 @@ class Yfin
       # end
 
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} here" }
-      if interval.downcase == "30m"
-        logger.debug("#{ticker}: resampling 30m OHLC from 15m")
-        quotes2 = quotes.resample('30T')
-        quotes = Polars::DataFrame.new(index: quotes2.last.index, data: {
-                                         'Open' => quotes2['Open'].first,
-                                         'High' => quotes2['High'].max,
-                                         'Low' => quotes2['Low'].min,
-                                         'Close' => quotes2['Close'].last,
-                                         'Adj Close' => quotes2['Adj Close'].last,
-                                         'Volume' => quotes2['Volume'].sum
-        })
-        begin
-          quotes['Dividends'] = quotes2['Dividends'].max
-          quotes['Stock Splits'] = quotes2['Stock Splits'].max
-        rescue Exception
-        end
-      end
-
-      # Rails.logger.info { "#{__FILE__}:#{__LINE__} here" }
       quote_type = @history_metadata["instrumentType"]
       expect_capital_gains = quote_type == 'MUTUALFUND' || quote_type == 'ETF'
       tz_exchange = @history_metadata["exchangeTimezoneName"]
+
       quotes = _set_df_tz(quotes, params["interval"], tz_exchange)
       quotes = _fix_yahoo_dst_issue(quotes, params["interval"])
       quotes = _fix_yahoo_returning_live_separate(quotes, params["interval"], tz_exchange)
+
       intraday = params["interval"][-1] == "m" || params["interval"][-1] == "h"
 
       if !prepost && intraday && @history_metadata.key?("tradingPeriods")
@@ -135,7 +126,8 @@ class Yfin
         quotes = _fix_yahoo_returning_prepost_unrequested(quotes, params["interval"], tps)
       end
 
-      df = _get_stock_data(quotes)
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} quotes = #{quotes.inspect}" }
+      df = _get_stock_data(quotes, params, fin)
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} df = #{df.inspect}" }
 
       if repair
@@ -168,15 +160,16 @@ class Yfin
       @history = df.dup
 
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} actions = #{actions}" }
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} @history = #{@history.inspect}" }
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} df = #{df.inspect}" }
-      df = df.drop(columns: ["Dividends", "Stock Splits", "Capital Gains"], errors: 'ignore') unless actions
+      df = df.drop(["Dividends", "Stock Splits", "Capital Gains"], errors: 'ignore') unless actions
 
       if !keepna
-        #   price_colnames = ['Open', 'High', 'Low', 'Close', 'Adj Close']
-        #   data_colnames = price_colnames + ['Volume'] + ['Dividends', 'Stock Splits', 'Capital Gains']
-        #   data_colnames = data_colnames.select { |c| df.columns.include?(c) }
-        #   mask_nan_or_zero = (df[data_colnames].isnan? | (df[data_colnames] == 0)).all(axis: 1)
-        #   df = df.drop(mask_nan_or_zero.index[mask_nan_or_zero])
+          # price_colnames = ['Open', 'High', 'Low', 'Close', 'Adj Close']
+          # data_colnames = price_colnames + ['Volume'] + ['Dividends', 'Stock Splits', 'Capital Gains']
+          # data_colnames = data_colnames.select { |c| df.columns.include?(c) }
+          # mask_nan_or_zero = (df[data_colnames].isnan? | (df[data_colnames] == 0)).all(axis: 1)
+          # df = df.drop(mask_nan_or_zero.index[mask_nan_or_zero])
       end
 
       # logger.debug("#{ticker}: yfinance returning OHLC: #{df.index[0]} -> #{df.index[-1]}")
@@ -188,6 +181,7 @@ class Yfin
       if returns && df.shape.first > 1
         df['Returns'] = [Float::NAN] + (1..df.length-1).to_a.map {|i| (df['Close'][i]-df['Close'][i-1])/df['Close'][i-1] }
       end
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} df = #{df.inspect}" }
 
       return df
     end
@@ -214,9 +208,12 @@ class Yfin
     def dividends
       history(period: "max") if @history.nil?
 
-      if !@history.nil? && @history.columns.include?("Dividends")
-        dividends = @history["Dividends"]
-        return dividends[dividends != 0]
+      if !@history.nil? # && @history['events'].keys.include?("dividends")
+        df = @history.dup.drop('Open','High','Low','Close','Adj Close', 'Volume','Stock Splits','Capital Gains')
+        return df.filter(Polars.col('Dividends')>0.0)
+        # divi = []
+        # @history['events']["dividends"].each_pair {|k,v| divi << { Timestamps: Time.at(k.to_i).utc.to_date, Value: v['amount']} }
+        # return Polars::DataFrame.new( divi )
       end
       return Polars::Series.new
     end
@@ -224,9 +221,14 @@ class Yfin
     def capital_gains
       history(period: "max") if @history.nil?
 
-      if !@history.nil? && @history.columns.include?("Capital Gains")
-        capital_gains = @history["Capital Gains"]
-        return capital_gains[capital_gains != 0]
+      if !@history.nil? # && @history['events'].keys.include?("capital gains")
+        # caga = []
+        # @history['events']['capital gains'].each_pair {|k,v| caga << { Timestamps: Time.at(k).utc.to_date, Value: v['amount']} }
+        # capital_gains = @history["Capital Gains"]
+        # return capital_gains[capital_gains != 0]
+        # Rails.logger.info { "#{__FILE__}:#{__LINE__} @history = #{@history.inspect}" }
+        df = @history.dup.drop('Open','High','Low','Close','Adj Close', 'Volume','Stock Splits', 'Dividends')
+        return df.filter(Polars.col('Capital Gains')>0.0)
       end
       return Polars::Series.new
     end
@@ -234,9 +236,14 @@ class Yfin
     def splits
       history(period: "max") if @history.nil?
 
-      if !@history.nil? && @history.columns.include?("Stock Splits")
-        splits = @history["Stock Splits"]
-        return splits[splits != 0]
+      if !@history.nil?  #&& @history['events'].keys.include?("stock splits") # @history.columns.include?("Stock Splits")
+        # stspl = []
+        # @history['events']['stock splits'].each_pair {|k,v| stspl << { Timestamps: Time.at(k.to_i).utc.to_date, Ratio: v['numerator'].to_f/v['denominator'].to_f } }
+
+        # splits = @history["Stock Splits"]
+        # return splits[splits != 0]
+        df = @history.dup.drop('Open','High','Low','Close','Adj Close', 'Volume','Capital Gains','Dividends')
+        return df.filter(Polars.col('Stock Splits')>0.0) #Polars::DataFrame.new(stspl)
       end
       return Polars::Series.new
     end
@@ -244,13 +251,16 @@ class Yfin
     def actions
       history(period: "max") if @history.nil?
 
-      if !@history.nil? && @history.columns.include?("Dividends") && @history.columns.include?("Stock Splits")
-        action_columns = ["Dividends", "Stock Splits"]
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} @history = #{@history.inspect}" }
+      if !@history.nil? #&& @history.columns.include?("Dividends") && @history.columns.include?("Stock Splits")
+        # action_columns = ["Dividends", "Stock Splits"]
 
-        action_columns.append("Capital Gains") if @history.columns.include?("Capital Gains")
+        # action_columns.append("Capital Gains") if @history.columns.include?("Capital Gains")
 
-        actions = @history[action_columns]
-        return actions[actions != 0].dropna(how: 'all').fillna(0)
+        # actions = @history[action_columns]
+        # return actions[actions != 0].dropna(how: 'all').fillna(0)
+        df = @history.dup.drop('Open','High','Low','Close','Adj Close', 'Volume')
+        return df.filter((Polars.col('Stock Splits')>0.0) | (Polars.col('Dividends')>0.0) | (Polars.col('Capital Gains')>0.0)) #Polars::DataFrame.new(stspl)
       end
       return Polars::Series.new
     end
@@ -566,9 +576,9 @@ class Yfin
 
         if start.nil?
           if interval == "1m"
-            start = fin - 1.week
+            start = (fin - 1.week).to_i
           else
-            max_start_datetime = DateTime.now - (99.years)
+            max_start_datetime = (DateTime.now - (99.years)).to_i
             start = max_start_datetime.to_i
           end
         else
@@ -576,12 +586,15 @@ class Yfin
         end
 
         params = { "period1" => start, "period2" => fin }
-        Rails.logger.info { "#{__FILE__}:#{__LINE__} params = #{params.inspect}" }
+        # Rails.logger.info { "#{__FILE__}:#{__LINE__} params = #{params.inspect}" }
 
       else
         period = period.downcase
-        params = { "range" => period }
-        Rails.logger.info { "#{__FILE__}:#{__LINE__} params = #{params.inspect}" }
+        # params = { "range" => period }
+        fin = DateTime.now.to_i
+        start = (fin - Utils.interval_to_timedelta(period)).to_i
+        params = { "period1" => start, "period2" => fin }
+        # Rails.logger.info { "#{__FILE__}:#{__LINE__} params = #{params.inspect}" }
       end
 
       params["interval"] = interval.downcase
@@ -589,7 +602,7 @@ class Yfin
       params["interval"] = "15m" if params["interval"] == "30m"
       params["events"] = "div,splits,capitalGains"
 
-      Rails.logger.info { "#{__FILE__}:#{__LINE__} params = #{params.inspect}" }
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} params = #{params.inspect}" }
       return params
     end
 
@@ -637,10 +650,10 @@ class Yfin
         if start_user
           err_msg += "#{start_user}"
         elsif !intraday
-          Rails.logger.info { "#{__FILE__}:#{__LINE__} start = #{start}" }
-          err_msg += "#{(start.to_date).strftime('%Y-%m-%d')}"
+          # Rails.logger.info { "#{__FILE__}:#{__LINE__} start = #{start}" }
+          err_msg += "#{(Time.at(start).to_date).strftime('%Y-%m-%d')}"
         else
-          err_msg += "#{(start.to_datetime).strftime('%Y-%m-%d %H:%M:%S %z')}"
+          err_msg += "#{Time.at(start).strftime('%Y-%m-%d %H:%M:%S %z')}"
         end
 
         err_msg += " -> "
@@ -648,9 +661,9 @@ class Yfin
         if end_user
           err_msg += "#{end_user})"
         elsif !intraday
-          err_msg += "#{(fin.to_date).strftime('%Y-%m-%d')})"
+          err_msg += "#{(Time.at(fin).to_date).strftime('%Y-%m-%d')})"
         else
-          err_msg += "#{(fin.to_datetime).strftime('%Y-%m-%d %H:%M:%S %z')})"
+          err_msg += "#{Time.at(fin).strftime('%Y-%m-%d %H:%M:%S %z')})"
         end
       else
         err_msg += " (period=#{period})"
@@ -680,27 +693,55 @@ class Yfin
       {fail: failed, msg: err_msg}
     end
 
-    def _get_stock_data(quotes)
+    def _get_stock_data(quotes, params, fin = nil)
       df = quotes #.sort_index
-      # if quotes.shape[0] > 0
-      #   startDt = quotes.index[0].floor('D')
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} df = #{df.inspect}" }
+      ts = Polars::Series.new(df['Timestamps']).to_a
 
-      #   dividends = dividends.loc[startDt:] if dividends.shape[0] > 0
+      if quotes.shape.first > 0
+        # startDt = quotes.index[0].floor('D')
+        startDt = quotes['Timestamps'].to_a.map(&:to_date).min
+        # Rails.logger.info { "#{__FILE__}:#{__LINE__} startDt = #{startDt.inspect}" }
+        endDt = fin.present? ? fin : Time.at(DateTime.now.tomorrow).to_i
 
-      #   capital_gains = capital_gains.loc[startDt:] if capital_gains.shape[0] > 0
+        # Rails.logger.info { "#{__FILE__}:#{__LINE__} @history[events][dividends] = #{@history['events']["dividends"].inspect}" }
+        # divi = {}
+        # @history['events']["dividends"].select{|k,v| 
+        #   Time.at(k.to_i).utc.to_date >= startDt && Time.at(k.to_i).utc.to_date <= endDt }.each{|k,v| 
+        #     divi['date'] = v['amount']} unless @history.try(:[],'events').try(:[],"dividends").nil?
+        d = [0.0] * df.length
+        # Rails.logger.info { "#{__FILE__}:#{__LINE__} df.length = #{df.length}" }
+        # Rails.logger.info { "#{__FILE__}:#{__LINE__} ts = #{ts.inspect}" }
+        @history['events']["dividends"].select{|k,v| 
+          Time.at(k.to_i).utc.to_date >= startDt && Time.at(k.to_i).utc.to_date <= endDt }.each{|k,v| 
+            d[ts.index(Time.at(k.to_i).utc)] = v['amount'].to_f} unless @history.try(:[],'events').try(:[],"dividends").nil?
+        df['Dividends'] = Polars::Series.new(d)
+        # Rails.logger.info { "#{__FILE__}:#{__LINE__} df = #{df.inspect}" }
 
-      #   splits = splits.loc[startDt:] if splits.shape[0] > 0
-      # end
+        # caga = {}
+        # @history['events']["capital gains"].select{|k,v| 
+        #   Time.at(k.to_i).utc.to_date >= startDt  && Time.at(k.to_i).utc.to_date <= endDt }.each{|k,v| 
+        #     caga['date'] = v['amount']} unless @history.try(:[],'events').try(:[],"capital gains").nil?
+        # capital_gains = capital_gains.loc[startDt:] if capital_gains.shape.first > 0
+        # Rails.logger.info { "#{__FILE__}:#{__LINE__} caga = #{caga.inspect}" }
+        d = [0.0] * df.length
+        @history['events']["capital gains"].select{|k,v| 
+          Time.at(k.to_i).utc.to_date >= startDt  && Time.at(k.to_i).utc.to_date <= endDt }.each{|k,v| 
+            d[ts.index(Time.at(k.to_i).utc)] = v['amount'].to_f} unless @history.try(:[],'events').try(:[],"capital gains").nil?
+        df['Capital Gains'] = Polars::Series.new(d)
 
-      # if fin
-      #   endDt = DateTime.strptime(fin.to_s, '%s').new_offset(tz)
-
-      #   dividends = dividends[dividends.index < endDt] if dividends.shape[0] > 0
-
-      #   capital_gains = capital_gains[capital_gains.index < endDt] if capital_gains.shape[0] > 0
-
-      #   splits = splits[splits.index < endDt] if splits.shape[0] > 0
-      # end
+        # splits = splits.loc[startDt:] if splits.shape[0] > 0
+        # stspl = {}
+        # @history['events']['stock splits'].select{|k,v| 
+        #   Time.at(k.to_i).utc.to_date >= startDt  && Time.at(k.to_i).utc.to_date <= endDt }.each{|k,v| 
+        #     stspl['date'] = v['numerator'].to_f/v['denominator'].to_f} unless @history.try(:[],'events').try(:[],"stock splits").nil?
+        # Rails.logger.info { "#{__FILE__}:#{__LINE__} stspl = #{stspl.inspect}" }
+        d = [0.0] * df.length
+        @history['events']["capital gains"].select{|k,v| 
+          Time.at(k.to_i).utc.to_date >= startDt  && Time.at(k.to_i).utc.to_date <= endDt }.each{|k,v| 
+            d[ts.index(Time.at(k.to_i).utc)] = v['numerator'].to_f/v['denominator'].to_f} unless @history.try(:[],'events').try(:[],"capital gains").nil?
+        df['Stock Splits'] = Polars::Series.new(d)
+      end
 
       # intraday = params["interval"][-1] == "m" || params["interval"][-1] == "h"
 
@@ -709,7 +750,6 @@ class Yfin
 
       #   dividends.index = \
       #     dividends.index.map { |i| DateTime.strptime(i.to_s, '%s').new_offset(tz).to_time } if dividends.shape[0] > 0
-
 
       #   splits.index = \
       #     splits.index.map { |i| DateTime.strptime(i.to_s, '%s').new_offset(tz).to_time } if splits.shape[0] > 0
@@ -730,7 +770,7 @@ class Yfin
       #   df["Dividends"] = 0.0
       # end
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} df = #{df.inspect}" }
-
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} df = #{df.filter(Polars.col("Dividends") > 0.0)}" }
 
       # df = _safe_merge_dfs(df, splits, interval) if splits.shape[0] > 0
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} df = #{df.inspect}" }
@@ -989,7 +1029,7 @@ class Yfin
     end
 
 
-    def _parse_quotes(data)
+    def _parse_quotes(data, interval)
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} data = #{data.inspect}" }
       timestamps = data["timestamp"]
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} timestamps = #{timestamps.inspect}" }
@@ -1026,6 +1066,24 @@ class Yfin
 
       # quotes.index = _pd.to_datetime(timestamps, unit: "s")
       # quotes.sort_index!(inplace: true)
+
+      if interval.downcase == "30m"
+        logger.debug("#{ticker}: resampling 30m OHLC from 15m")
+        quotes2 = quotes.resample('30T')
+        quotes = Polars::DataFrame.new(index: quotes2.last.index, data: {
+                                         'Open' => quotes2['Open'].first,
+                                         'High' => quotes2['High'].max,
+                                         'Low' => quotes2['Low'].min,
+                                         'Close' => quotes2['Close'].last,
+                                         'Adj Close' => quotes2['Adj Close'].last,
+                                         'Volume' => quotes2['Volume'].sum
+        })
+        begin
+          quotes['Dividends'] = quotes2['Dividends'].max
+          quotes['Stock Splits'] = quotes2['Stock Splits'].max
+        rescue Exception
+        end
+      end
 
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} quotes = #{quotes.inspect}" }
       return quotes
