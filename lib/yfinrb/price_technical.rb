@@ -66,7 +66,7 @@ class Yfinrb
       Polars::Series.new("#{window} Aroon Ind", [nil]*(df.rows.length - output.length)+output) #)
     end
 
-    def aroonosc(period: '1y', window: 20)
+    def aroonosc(df, window: 20)
       inputs = ['High', 'Low'].map{|col| Polars::Series.new(df[col]).to_a}
       output = Tulirb.aroonosc(inputs, period: window).first
       Polars::Series.new("#{window} Aroon Osc Ind", [nil]*(df.rows.length - output.length)+output) #)
@@ -302,9 +302,6 @@ class Yfinrb
       df = df.drop('idx')
       s
     end
-
-    alias_method :sma, :moving_avgs
-
 
     def natr(df, window: 20)
       inputs = ['High', 'Low', 'Adj Close'].map{|col| Polars::Series.new(df[col]).to_a}
