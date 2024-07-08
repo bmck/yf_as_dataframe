@@ -1,4 +1,4 @@
-class Yfin
+class Yfinrb
   module Financials
     include ActiveSupport::Inflector
 

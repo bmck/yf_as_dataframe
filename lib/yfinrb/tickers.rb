@@ -1,6 +1,4 @@
-require 'set'
-
-class Yfin
+class Yfinrb
   class Tickers
     def initialize(tickers, session = nil)
       tickers = tickers.is_a?(Array) ? tickers : tickers.split(',')

@@ -1,5 +1,4 @@
-
-class Yfin
+class Yfinrb
   class Ticker
     ROOT_URL = 'https://finance.yahoo.com'.freeze
     BASE_URL = 'https://query2.finance.yahoo.com'.freeze

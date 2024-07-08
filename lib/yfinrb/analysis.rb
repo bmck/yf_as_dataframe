@@ -1,4 +1,4 @@
-class Yfin
+class Yfinrb
   module Analysis
     extend ActiveSupport::Concern
 

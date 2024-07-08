@@ -4,7 +4,7 @@ require 'thread'
 require 'date'
 require 'nokogiri'
 
-class Yfin
+class Yfinrb
   module YfConnection
     extend ActiveSupport::Concern
     # extend HTTParty

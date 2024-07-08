@@ -1,11 +1,4 @@
-
-require'date'
-require 'open-uri'
-require 'json'
-require 'csv'
-
-
-class Yfin
+class Yfinrb
   module Holders
     extend ActiveSupport::Concern
     # include YfConnection

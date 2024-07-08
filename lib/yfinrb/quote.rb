@@ -1,5 +1,4 @@
-
-class Yfin
+class Yfinrb
   module Quote
     extend ActiveSupport::Concern
 

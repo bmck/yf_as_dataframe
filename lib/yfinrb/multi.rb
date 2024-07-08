@@ -1,6 +1,4 @@
-
-
-class Yfin
+class Yfinrb
   class Multi
 
     def download(tickers, start: nil, fin: nil, actions: false, threads: true,

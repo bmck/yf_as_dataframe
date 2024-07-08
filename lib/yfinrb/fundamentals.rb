@@ -1,5 +1,4 @@
-
-class Yfin
+class Yfinrb
   module Fundamentals
     extend ActiveSupport::Concern
 

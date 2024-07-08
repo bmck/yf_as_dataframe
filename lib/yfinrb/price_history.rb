@@ -1,5 +1,4 @@
-
-class Yfin
+class Yfinrb
   module PriceHistory
     extend ActiveSupport::Concern
     include ActionView::Helpers::NumberHelper
