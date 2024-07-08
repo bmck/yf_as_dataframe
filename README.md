@@ -100,11 +100,10 @@ opt = msft.option_chain('2026-12-18')
 # technical operations, using the Tulirb gem, which provides bindings to 
 # the Tulip technical indicators library
 h = msft.history(period: '2y', interval: '1d')
-
 Yfinrb.ad(h)
 
-
-h.insert_column(h.columns.length, Yfinrb.ad(h))
+# then
+h.insert_at_idx(h.columns.length, Yfinrb.ad(h))
 h['ad_results'] = Yfinrb.ad(h)
 
 ```

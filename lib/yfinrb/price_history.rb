@@ -1,3 +1,6 @@
+require 'polars'
+require 'polars-df'
+
 class Yfinrb
   module PriceHistory
     extend ActiveSupport::Concern
@@ -34,8 +37,10 @@ class Yfinrb
                 rounding: false, raise_errors: false, returns: false)
       logger = Rails.logger # Yfin.get_yf_logger
       start_user = start
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} here" }
       end_user = fin || DateTime.now
 
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} here" }
       params = _preprocess_params(start, fin, interval, period, prepost, raise_errors)
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} params=#{params.inspect}" }
 
@@ -555,9 +560,11 @@ class Yfinrb
     private
 
     def _preprocess_params(start, fin, interval, period, prepost, raise_errors)
-       # Rails.logger.info { "#{__FILE__}:#{__LINE__} start = #{start.inspect}, end_date = #{fin.inspect}, interval = #{interval}, period = #{period}, tz = #{tz}, prepost = #{prepost}, raise_errors = #{raise_errors}" }
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} start = #{start.inspect}, end_date = #{fin.inspect}, interval = #{interval}, period = #{period}, tz = #{tz}, prepost = #{prepost}, raise_errors = #{raise_errors}" }
 
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} here start = #{fin}, period = #{period}" } 
       if start || period.nil? || period.downcase == "max"
+        # Rails.logger.info { "#{__FILE__}:#{__LINE__} here fin = #{fin}" } 
         if tz.nil?
           err_msg = "No timezone found, symbol may be delisted"
           # Yfin.shared_DFS[@ticker] = Yfinrb::Utils.empty_df
@@ -570,6 +577,7 @@ class Yfinrb
           return Yfinrb::Utils.empty_df
         end
 
+        # Rails.logger.info { "#{__FILE__}:#{__LINE__} here fin = #{fin}" } 
         fin = fin.nil? ? Time.now.to_i : Yfinrb::Utils.parse_user_dt(fin, tz)
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} fin = #{fin.inspect}" }
 
@@ -591,6 +599,7 @@ class Yfinrb
         period = period.downcase
         # params = { "range" => period }
         fin = DateTime.now.to_i
+        # Rails.logger.info { "#{__FILE__}:#{__LINE__} here fin= #{fin}, period = #{period}" } 
         start = (fin - Yfinrb::Utils.interval_to_timedelta(period)).to_i
         params = { "period1" => start, "period2" => fin }
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} params = #{params.inspect}" }

@@ -38,7 +38,7 @@ class Yfinrb
 
 
     def avg_daily_trading_volume(df, window: 20)
-      df.insert_column(0, Polars::Series.new('idx', (1..df.length).to_a))
+      df.insert_at_idx(0, Polars::Series.new('idx', (1..df.length).to_a))
       df = df.set_sorted('idx', descending: false)
 
       adtv = df.group_by_rolling(index_column: 'idx', period: "#{window}i").
@@ -297,9 +297,8 @@ class Yfinrb
     alias_method :momentum, :mom
 
     def moving_avgs(df, window: 20)
-      df.insert_column(0, Polars::Series.new('idx', (1..df.length).to_a))
+      df.insert_at_idx(0, Polars::Series.new('idx', (1..df.length).to_a))
       df = df.set_sorted('idx', descending: false)
-      # df = df.insert_column(df.columns.length-1, 
       s = df.group_by_rolling(index_column: 'idx', period: "#{window}i").agg([Polars.mean('Adj Close').alias("MA(#{window})")]).to_series(1) #)
       df = df.drop('idx')
       s
@@ -332,7 +331,7 @@ class Yfinrb
     #     end
     #     next if s.all?(&:nil?)
     #     s = Polars::Series.new("#{n}-day Price Chg", s)
-    #     df.insert_column(df.columns.length, s)
+    #     df.insert_at_idx(df.columns.length, s)
     #   end
 
     #   min_win = WINDOWS.min

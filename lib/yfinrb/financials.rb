@@ -1,3 +1,5 @@
+require 'polars-df'
+
 class Yfinrb
   module Financials
     include ActiveSupport::Inflector

@@ -1,3 +1,5 @@
+require 'polars-df'
+
 class Yfinrb
   class Multi
 

@@ -1,3 +1,5 @@
+require 'polars-df'
+
 class Yfinrb
   class Utils
     BASE_URL = 'https://query1.finance.yahoo.com'
@@ -260,13 +262,36 @@ class Yfinrb
       case interval
       when '1mo'
         1.month
+      when '2mo'
+        2.months
       when '3mo'
         3.months
+      when '6mo'
+        6.months
+      when '9mo'
+        9.months
+      when '12mo'
+        1.year
       when '1y'
         1.year
+      when '2y'
+        2.year
+      when '3y'
+        3.year
+      when '4y'
+        4.year
+      when '5y'
+        5.year
       when '1wk'
         1.week
+      when '2wk'
+        2.week
+      when '3wk'
+        3.week
+      when '4wk'
+        4.week
       else
+        Rails.logger.warn { "#{__FILE__}:#{__LINE__} #{interval} not a recognized interval" }
         interval
       end
     end
