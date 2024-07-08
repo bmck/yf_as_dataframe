@@ -3,7 +3,7 @@ class Yfinrb
     ROOT_URL = 'https://finance.yahoo.com'.freeze
     BASE_URL = 'https://query2.finance.yahoo.com'.freeze
 
-    include YfConnection
+    include Yfinrb::YfConnection
 
     attr_accessor :tz, :proxy, :isin, :timeout
     attr_reader :error_message, :ticker
@@ -32,12 +32,12 @@ class Yfinrb
       yfconn_initialize
     end
 
-    include PriceHistory
-    include Analysis
-    include Fundamentals
-    include Holders
-    include Quote
-    include Financials
+    include Yfinrb::PriceHistory
+    include Yfinrb::Analysis
+    include Yfinrb::Fundamentals
+    include Yfinrb::Holders
+    include Yfinrb::Quote
+    include Yfinrb::Financials
 
     alias_method :symbol, :ticker
 

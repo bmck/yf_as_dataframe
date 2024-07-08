@@ -1,3 +1,3 @@
-module Yfinrb
-  VERSION = "0.2.1"
+class Yfinrb
+  VERSION = "0.2.3"
 end
