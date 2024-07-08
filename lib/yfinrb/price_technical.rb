@@ -1,3 +1,5 @@
+require 'tulirb'
+
 class Yfinrb
   module PriceTechnical
     extend ActiveSupport::Concern

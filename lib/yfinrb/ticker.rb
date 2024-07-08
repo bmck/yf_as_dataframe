@@ -27,7 +27,7 @@ class Yfinrb
       @expirations = {}
       @underlying = {}
 
-      @ticker = (Utils.is_isin(ticker.upcase) ? Utils.get_ticker_by_isin(ticker.upcase, nil, @session) : ticker).upcase
+      @ticker = (Yfinrb::Utils.is_isin(ticker.upcase) ? Yfinrb::Utils.get_ticker_by_isin(ticker.upcase, nil, @session) : ticker).upcase
 
       yfconn_initialize
     end
@@ -49,13 +49,13 @@ class Yfinrb
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} start = #{start.inspect}, fin = #{fin.inspect}" } 
 
       if start
-        start_ts = Utils.parse_user_dt(start, tz)
+        start_ts = Yfinrb::Utils.parse_user_dt(start, tz)
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} start_ts = #{start_ts}" }
         start = Time.at(start_ts).in_time_zone(tz)
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} start = #{start.inspect}, fin = #{fin.inspect}" } 
       end
       if fin
-        end_ts = Utils.parse_user_dt(fin, tz)
+        end_ts = Yfinrb::Utils.parse_user_dt(fin, tz)
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} end_ts = #{end_ts}" }
         fin = Time.at(end_ts).in_time_zone(tz)
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} start = #{start.inspect}, fin = #{fin.inspect}" } 

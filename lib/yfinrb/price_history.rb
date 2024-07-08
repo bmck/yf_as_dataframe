@@ -75,7 +75,7 @@ class Yfinrb
         if @reconstruct_start_interval && @reconstruct_start_interval == interval
           @reconstruct_start_interval = nil
         end
-        return Utils.empty_df
+        return Yfinrb::Utils.empty_df
       end
 
       # begin
@@ -560,17 +560,17 @@ class Yfinrb
       if start || period.nil? || period.downcase == "max"
         if tz.nil?
           err_msg = "No timezone found, symbol may be delisted"
-          # Yfin.shared_DFS[@ticker] = Utils.empty_df
+          # Yfin.shared_DFS[@ticker] = Yfinrb::Utils.empty_df
           # Yfin.shared_ERRORS[@ticker] = err_msg
           if raise_errors
             raise Exception.new("#{@ticker}: #{err_msg}")
           else
             Rails.logger.error("#{@ticker}: #{err_msg}")
           end
-          return Utils.empty_df
+          return Yfinrb::Utils.empty_df
         end
 
-        fin = fin.nil? ? Time.now.to_i : Utils.parse_user_dt(fin, tz)
+        fin = fin.nil? ? Time.now.to_i : Yfinrb::Utils.parse_user_dt(fin, tz)
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} fin = #{fin.inspect}" }
 
         if start.nil?
@@ -581,7 +581,7 @@ class Yfinrb
             start = max_start_datetime.to_i
           end
         else
-          start = Utils.parse_user_dt(start, tz)
+          start = Yfinrb::Utils.parse_user_dt(start, tz)
         end
 
         params = { "period1" => start, "period2" => fin }
@@ -591,7 +591,7 @@ class Yfinrb
         period = period.downcase
         # params = { "range" => period }
         fin = DateTime.now.to_i
-        start = (fin - Utils.interval_to_timedelta(period)).to_i
+        start = (fin - Yfinrb::Utils.interval_to_timedelta(period)).to_i
         params = { "period1" => start, "period2" => fin }
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} params = #{params.inspect}" }
       end
@@ -1110,7 +1110,7 @@ class Yfinrb
 
     def _reconstruct_intervals_batch(df, interval, prepost, tag=-1)
       #   # Reconstruct values in df using finer-grained price data. Delimiter marks what to reconstruct
-      #   logger = Rails.logger # Utils.get_yf_logger
+      #   logger = Rails.logger # Yfinrb::Utils.get_yf_logger
 
       #   # raise Exception.new("'df' must be a Polars DataFrame not", type(df)) unless df.is_a?(Polars::DataFrame)
       #   return df if interval == "1m"
@@ -1129,7 +1129,7 @@ class Yfinrb
       #   # If interval is weekly then can construct with daily. But if smaller intervals then
       #   # restricted to recent times:
       #   intervals = ["1wk", "1d", "1h", "30m", "15m", "5m", "2m", "1m"]
-      #   itds = intervals.map { |i| [i, Utils.interval_to_timedelta(interval)] }.to_h
+      #   itds = intervals.map { |i| [i, Yfinrb::Utils.interval_to_timedelta(interval)] }.to_h
       #   nexts = intervals.each_cons(2).to_h
       #   min_lookbacks = {"1wk" => nil, "1d" => nil, "1h" => 730.days }
       #   ["30m", "15m", "5m", "2m"].each { |i| min_lookbacks[i] = 60.days }
@@ -1560,7 +1560,7 @@ class Yfinrb
       #   return df if df.empty?
 
       #   # Easy to detect and fix, just look for outliers = ~100x local median
-      #   logger = Rails.logger # Utils.get_yf_logger
+      #   logger = Rails.logger # Yfinrb::Utils.get_yf_logger
 
       #   if df.shape[0] == 0
       #     df["Repaired?"] = false if !df.columns.include?("Repaired?")

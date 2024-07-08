@@ -1,3 +1,5 @@
+require 'httparty'
+
 class Yfinrb
   module Quote
     extend ActiveSupport::Concern
@@ -45,7 +47,7 @@ class Yfinrb
         result = _fetch(['recommendationTrend']).parsed_response
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} result = #{result.inspect}" }
         # if result.nil?
-        #   @recommendations = Utils.empty_df()  #Polars::DataFrame()
+        #   @recommendations = Yfinrb::Utils.empty_df()  #Polars::DataFrame()
         # else
           begin
             data = result["quoteSummary"]["result"][0]["recommendationTrend"]["trend"]
@@ -68,7 +70,7 @@ class Yfinrb
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} result = #{result.inspect}" }
 
         # if result.nil?
-        #   @upgrades_downgrades = Utils.empty_df()  #Polars::DataFrame()
+        #   @upgrades_downgrades = Yfinrb::Utils.empty_df()  #Polars::DataFrame()
         # else
           begin
             data = result["quoteSummary"]["result"][0]["upgradeDowngradeHistory"]["history"]

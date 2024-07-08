@@ -60,10 +60,10 @@ class Yfinrb
       logger = Rails.logger
 
       if show_errors
-        Utils.print_once("yfinance: download(show_errors=#{show_errors}) argument is deprecated and will be removed in future version. Do this instead: logging.getLogger('yfinance').setLevel(logging.ERROR)")
+        Yfinrb::Utils.print_once("yfinance: download(show_errors=#{show_errors}) argument is deprecated and will be removed in future version. Do this instead: logging.getLogger('yfinance').setLevel(logging.ERROR)")
         logger.level = Logger::ERROR
       else
-        Utils.print_once("yfinance: download(show_errors=#{show_errors}) argument is deprecated and will be removed in future version. Do this instead to suppress error messages: logging.getLogger('yfinance').setLevel(logging.CRITICAL)")
+        Yfinrb::Utils.print_once("yfinance: download(show_errors=#{show_errors}) argument is deprecated and will be removed in future version. Do this instead to suppress error messages: logging.getLogger('yfinance').setLevel(logging.CRITICAL)")
         logger.level = Logger::CRITICAL
       end
 
@@ -78,9 +78,9 @@ class Yfinrb
       tickers = tickers.is_a?(Array) ? tickers : tickers.gsub(',', ' ').split
       _tickers_ = []
       tickers.each do |ticker|
-        if Utils.is_isin(ticker)
+        if Yfinrb::Utils.is_isin(ticker)
           isin = ticker
-          ticker = Utils.get_ticker_by_isin(ticker, proxy, session: session)
+          ticker = Yfinrb::Utils.get_ticker_by_isin(ticker, proxy, session: session)
           # @shared::_ISINS[ticker] = isin
         end
         _tickers_ << ticker
@@ -185,7 +185,7 @@ class Yfinrb
         begin
           @shared::_DFS[key] = Polars::DataFrame.new(index: idx, data: df).drop_duplicates
         rescue
-          @shared::_DFS[key] = Polars.concat([Utils.empty_df(idx), df.dropna], axis: 0, sort: true)
+          @shared::_DFS[key] = Polars.concat([Yfinrb::Utils.empty_df(idx), df.dropna], axis: 0, sort: true)
         end
 
         @shared::_DFS[key] = @shared::_DFS[key].loc[!@shared::_DFS[key].index.duplicated(keep: 'last')]
@@ -221,7 +221,7 @@ class Yfinrb
           raise_errors: true
         )
       rescue Exception => e
-        @shared::_DFS[ticker.upcase] = Utils.empty_df
+        @shared::_DFS[ticker.upcase] = Yfinrb::Utils.empty_df
         @shared::_ERRORS[ticker.upcase] = e.to_s
         @shared::_TRACEBACKS[ticker.upcase] = e.backtrace.join("\n")
       else

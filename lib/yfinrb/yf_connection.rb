@@ -3,6 +3,8 @@
 require 'thread'
 require 'date'
 require 'nokogiri'
+require 'zache'
+require 'httparty'
 
 class Yfinrb
   module YfConnection
@@ -23,7 +25,7 @@ class Yfinrb
     def yfconn_initialize
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} here"}
       begin
-        @@zache = Zache.new
+        @@zache = ::Zache.new
         @@session_is_caching = true
       rescue NoMethodError
         # Not caching
@@ -33,7 +35,7 @@ class Yfinrb
       @@crumb = nil
       @@cookie = nil
       @@cookie_strategy = 'basic'
-      @@cookie_lock = Mutex.new()
+      @@cookie_lock = ::Mutex.new()
     end
 
 
@@ -54,9 +56,9 @@ class Yfinrb
       }
 
       proxy = _get_proxy
-      HTTParty.http_proxy(addr = proxy.split(':').first, port = proxy.split(':').second.split('/').first) unless proxy.nil?
+      ::HTTParty.http_proxy(addr = proxy.split(':').first, port = proxy.split(':').second.split('/').first) unless proxy.nil?
 
-      cookie_hash = HTTParty::CookieHash.new
+      cookie_hash = ::HTTParty::CookieHash.new
       cookie_hash.add_cookies(@@cookie)
       options = { headers: headers.dup.merge(@@user_agent_headers).merge({ 'cookie' => cookie_hash.to_cookie_string, 'crumb' => crumb })} #,  debug_output: STDOUT }
 
@@ -64,7 +66,7 @@ class Yfinrb
       joiner = ('?'.in?(request_args[:url]) ? '&' : '?')
       u += (joiner + CGI.unescape(request_args[:params].to_query)) unless request_args[:params].empty?
 
-      response = HTTParty.get(u, options)
+      response = ::HTTParty.get(u, options)
 
       return response
     end
@@ -169,13 +171,13 @@ class Yfinrb
       return @@crumb unless @@crumb.nil?
       return nil if (cookie = _get_cookie_basic()).nil?
 
-      cookie_hash = HTTParty::CookieHash.new
+      cookie_hash = ::HTTParty::CookieHash.new
       cookie_hash.add_cookies(cookie)
       options = {headers: @@user_agent_headers.dup.merge(
                    { 'cookie' => cookie_hash.to_cookie_string }
       )} #,  debug_output: STDOUT }
 
-      crumb_response = HTTParty.get('https://query1.finance.yahoo.com/v1/test/getcrumb', options)
+      crumb_response = ::HTTParty.get('https://query1.finance.yahoo.com/v1/test/getcrumb', options)
       @@crumb = crumb_response.parsed_response
 
       return (@@crumb.nil? || '<html>'.in?(@@crumb)) ? nil : @@crumb
@@ -195,17 +197,17 @@ class Yfinrb
       get_args[:expire_after] = @expire_after if @session_is_caching
       response = @session.get(**get_args)
 
-      soup = Nokogiri::HTML(response.content, 'html.parser')
+      soup = ::Nokogiri::HTML(response.content, 'html.parser')
       csrfTokenInput = soup.find('input', attrs: {'name': 'csrfToken'})
 
       # puts 'Failed to find "csrfToken" in response'
       return false if csrfTokenInput.nil?
 
       csrfToken = csrfTokenInput['value']
-      puts "csrfToken = #{csrfToken}"
+      # puts "csrfToken = #{csrfToken}"
       sessionIdInput = soup.find('input', attrs: {'name': 'sessionId'})
       sessionId = sessionIdInput['value']
-      puts "sessionId='#{sessionId}"
+      # puts "sessionId='#{sessionId}"
 
       originalDoneUrl = 'https://finance.yahoo.com/'
       namespace = 'yahoo'

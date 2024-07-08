@@ -34,10 +34,10 @@ Gem::Specification.new do |spec|
   # Uncomment to register a new dependency of your gem
   # spec.add_dependency "typhoeus-gem", "~> 0.6.9"
   spec.add_dependency "tzinfo-data"
-  spec.add_dependency 'polars-df', '~>0.1'
-  spec.add_dependency 'zache', '~>0.13.1'
-  spec.add_dependency 'httparty', '~>0.16.0'
-  spec.add_dependency 'tulirb', '~>0.1'
+  spec.add_dependency 'polars-df'
+  spec.add_dependency 'zache'
+  spec.add_dependency 'httparty'
+  spec.add_dependency 'tulirb'
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html
