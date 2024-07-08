@@ -1,5 +1,4 @@
 class Yfinrb
-
   class YfinanceException < StandardError
     attr_reader :msg
   end
