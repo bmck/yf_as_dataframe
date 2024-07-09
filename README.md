@@ -26,11 +26,13 @@ Yahoo! finance API is intended for personal use only.**
 
 ---
 
-## Quick Start
+## Purpose
 
-### The Ticker module
+This package provides for pulling data from Yahoo!'s unofficial API, and providing that data using using [Polars](https://github.com/ankane/ruby-polars?tab=readme-ov-file) dataframes in ruby.  Data in those dataframes can then be easily post-processed using technical indicators provided by [Tulip](https://tulipindicators.org/) via [Tulirb's](https://www.rubydoc.info/github/ozone4real/tulirb/main/Tulirb) ruby bindings.  Graphing using [Vega](https://github.com/ankane/vega-ruby) is forthcoming.
 
-The `Ticker` class, which allows you to access ticker data:
+### Quick Start: The Ticker module
+
+The `Ticker` class, which allows you to access ticker data from Yahoo!'s unofficial API:
 
 ```ruby
 
@@ -39,7 +41,7 @@ msft = Yfinrb::Ticker.new("MSFT")
 # get all stock info
 msft.info
 
-# get historical market data as a dataframe using [Polars](https://github.com/ankane/ruby-polars?tab=readme-ov-file)
+# get historical market data as a dataframe 
 hist = msft.history(period: "1mo")
 hist2 = msft.history(start: '2020-01-01', fin: '2021-12-31')
 
