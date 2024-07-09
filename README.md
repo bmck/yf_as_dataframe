@@ -39,7 +39,7 @@ msft = Yfinrb::Ticker.new("MSFT")
 # get all stock info
 msft.info
 
-# get historical market data
+# get historical market data as a dataframe using [Polars](https://github.com/ankane/ruby-polars?tab=readme-ov-file)
 hist = msft.history(period: "1mo")
 hist2 = msft.history(start: '2020-01-01', fin: '2021-12-31')
 
@@ -108,7 +108,7 @@ h['ad_results'] = Yfinrb.ad(h)
 
 ```
 
-Most of the indicators [https://tulipindicators.org/][here] and [https://www.rubydoc.info/github/ozone4real/tulirb/main/Tulirb][here].  Indicator parameters at https://www.rubydoc.info/github/ozone4real/tulirb/main/Tulirb called, e.g., "period" or "short_period" are renamed as "window" or "short_window", respectively.  There are a few other variants that are affected.  Default values are shown below.
+Most of the indicators [here](https://tulipindicators.org/) and [here](https://www.rubydoc.info/github/ozone4real/tulirb/main/Tulirb).  Indicator parameters in [Tulirb](https://www.rubydoc.info/github/ozone4real/tulirb/main/Tulirb) called, e.g., "period" or "short_period" are renamed as "window" or "short_window", respectively.  There are a few other variants that are affected.  Default values are shown below.
 
 ```ruby
 
