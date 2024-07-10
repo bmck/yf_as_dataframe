@@ -28,7 +28,7 @@ Yahoo! finance API is intended for personal use only.**
 
 ## Purpose
 
-This package provides for pulling data from Yahoo!'s unofficial API, and providing that data using using [Polars](https://github.com/ankane/ruby-polars?tab=readme-ov-file) dataframes in ruby.  Data in those dataframes can then be easily post-processed using technical indicators provided by [Tulip](https://tulipindicators.org/) via [Tulirb's](https://www.rubydoc.info/github/ozone4real/tulirb/main/Tulirb) ruby bindings.  Graphing using [Vega](https://github.com/ankane/vega-ruby) is forthcoming.
+This package provides for pulling data from Yahoo!'s unofficial API, and providing that data using using [Polars](https://github.com/ankane/ruby-polars?tab=readme-ov-file) dataframes in ruby.  Data in those dataframes can then be easily post-processed using technical indicators provided by [Tulip](https://tulipindicators.org/) via [Tulirb's](https://www.rubydoc.info/github/ozone4real/tulirb/main/Tulirb) ruby bindings. 
 
 ### Quick Start: The Ticker module
 
