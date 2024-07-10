@@ -250,7 +250,7 @@ Then the following image should be saved at the specified location.
 
 PNG, SVG, and PDF output formats are supported directly.  See [this page](https://github.com/ankane/vega-ruby) for more information in constructing supported charts.
 
-While it _has_not_been_tested_yet_, images _should_ be able to be produced interactively using [iruby](https://github.com/SciRuby/iruby) operating in a [Jupyter environment](https://github.com/jupyterlab).
+While it _has not been tested yet_, images _should_ be able to be produced interactively using [iruby](https://github.com/SciRuby/iruby) operating in a [Jupyter environment](https://github.com/jupyterlab).
 
 ---
 
