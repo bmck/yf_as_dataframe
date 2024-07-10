@@ -224,13 +224,43 @@ To graph any of the series, per the information [here](https://github.com/ankane
 yarn add vega-cli vega-lite
 ```
 
-Then, from a console window, you can generate charts, e.g., 
+Then, from within irb, you can generate charts, e.g., 
 
 ```ruby
-File.binwrite('/tmp/chart.png',df.plot("Timestamps", "EMA(5) for Adj Close", type: "line", width:800, height:500).to_png)
+> msft = Yfinrb::Ticker.new("MSFT")
+
+> df = msft.history(period: '3y', interval: '1d')
+
+> df.insert_at_idx(df.columns.length, Yfinrb.ema(df, column: 'Adj Close', window: 5))
+
+# => 
+# shape: (753, 11)
+# ┌────────────┬────────────┬────────────┬────────────┬───┬───────────┬───────────────┬──────────────┬──────────────────────┐
+# │ Timestamps ┆ Open       ┆ High       ┆ Low        ┆ … ┆ Dividends ┆ Capital Gains ┆ Stock Splits ┆ EMA(5) for Adj Close │
+# │ ---        ┆ ---        ┆ ---        ┆ ---        ┆   ┆ ---       ┆ ---           ┆ ---          ┆ ---                  │
+# │ date       ┆ f64        ┆ f64        ┆ f64        ┆   ┆ f64       ┆ f64           ┆ f64          ┆ f64                  │
+# ╞════════════╪════════════╪════════════╪════════════╪═══╪═══════════╪═══════════════╪══════════════╪══════════════════════╡
+# │ 2021-07-12 ┆ 279.160004 ┆ 279.769989 ┆ 276.579987 ┆ … ┆ 0.0       ┆ 0.0           ┆ 0.0          ┆ 270.325745           │
+# │ 2021-07-13 ┆ 277.519989 ┆ 282.850006 ┆ 277.390015 ┆ … ┆ 0.0       ┆ 0.0           ┆ 0.0          ┆ 271.514984           │
+# │ 2021-07-14 ┆ 282.350006 ┆ 283.660004 ┆ 280.549988 ┆ … ┆ 0.0       ┆ 0.0           ┆ 0.0          ┆ 272.804932           │
+# │ 2021-07-15 ┆ 282.0      ┆ 282.51001  ┆ 279.829987 ┆ … ┆ 0.0       ┆ 0.0           ┆ 0.0          ┆ 273.184001           │
+# │ 2021-07-16 ┆ 282.070007 ┆ 284.100006 ┆ 279.459991 ┆ … ┆ 0.0       ┆ 0.0           ┆ 0.0          ┆ 273.345751           │
+# │ …          ┆ …          ┆ …          ┆ …          ┆ … ┆ …         ┆ …             ┆ …            ┆ …                    │
+# │ 2024-07-02 ┆ 453.200012 ┆ 459.589996 ┆ 453.109985 ┆ … ┆ 0.0       ┆ 0.0           ┆ 0.0          ┆ 454.288375           │
+# │ 2024-07-03 ┆ 458.190002 ┆ 461.019989 ┆ 457.880005 ┆ … ┆ 0.0       ┆ 0.0           ┆ 0.0          ┆ 456.448913           │
+# │ 2024-07-05 ┆ 459.609985 ┆ 468.350006 ┆ 458.970001 ┆ … ┆ 0.0       ┆ 0.0           ┆ 0.0          ┆ 460.152608           │
+# │ 2024-07-08 ┆ 466.549988 ┆ 467.700012 ┆ 464.459991 ┆ … ┆ 0.0       ┆ 0.0           ┆ 0.0          ┆ 462.181735           │
+# │ 2024-07-09 ┆ 467.0      ┆ 467.329987 ┆ 458.0      ┆ … ┆ 0.0       ┆ 0.0           ┆ 0.0          ┆ 461.30116            │
+# └────────────┴────────────┴────────────┴────────────┴───┴───────────┴───────────────┴──────────────┴──────────────────────┘ 
+
+> File.binwrite('/tmp/chart.png',df.plot("Timestamps", "EMA(5) for Adj Close", type: "line", width:800, height:500).to_png)
 ```
 
-PNG, SVG, and PDF format outputs are supported directly.  See [this page](https://github.com/ankane/vega-ruby) for more information in constructing supported charts.
+Then the following image should be saved at the specified location.
+
+![alt text](./chart.png?raw=true)
+
+PNG, SVG, and PDF output formats are supported directly.  See [this page](https://github.com/ankane/vega-ruby) for more information in constructing supported charts.
 
 
 ---
