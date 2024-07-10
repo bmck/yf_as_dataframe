@@ -216,6 +216,25 @@ Or install it yourself as:
 
 ---
 
+## Graphing
+
+To graph any of the series, per the information [here](https://github.com/ankane/vega-ruby#exporting-charts-experimental), you will need to run 
+
+```sh
+yarn add vega-cli vega-lite
+```
+
+Then, from a console window, you can generate charts, e.g., 
+
+```ruby
+File.binwrite('/tmp/chart.png',df.plot("Timestamps", "EMA(5) for Adj Close", type: "line", width:800, height:500).to_png)
+```
+
+PNG, SVG, and PDF format outputs are supported directly.  See [this page](https://github.com/ankane/vega-ruby) for more information in constructing supported charts.
+
+
+---
+
 ## Development
 
 To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
