@@ -110,7 +110,7 @@ h['ad_results'] = Yfinrb.ad(h)
 
 ```
 
-Most of the indicators [here](https://tulipindicators.org/) and [here](https://www.rubydoc.info/github/ozone4real/tulirb/main/Tulirb).  Indicator parameters in [Tulirb](https://www.rubydoc.info/github/ozone4real/tulirb/main/Tulirb) called, e.g., "period" or "short_period" are renamed as "window" or "short_window", respectively.  There are a few other variants that are affected.  Default values are shown below.
+Most of the indicators are found [here](https://tulipindicators.org/) and [here](https://www.rubydoc.info/github/ozone4real/tulirb/main/Tulirb).  Indicator parameters in [Tulirb](https://www.rubydoc.info/github/ozone4real/tulirb/main/Tulirb) called, e.g., "period" or "short_period" are renamed as "window" or "short_window", respectively.  There are a few other variants that are affected.  Default values are shown below.
 
 ```ruby
 
@@ -195,30 +195,11 @@ Yfinrb.wma(df, column: 'Adj Close', window: 5)
 Yfinrb.zlema(df, column: 'Adj Close', window: 5)
 ```
 
-
----
-
-## Installation
-
-Add this line to your application's Gemfile:
-
-```ruby
-gem 'yfinrb'
-```
-
-And then execute:
-
-    $ bundle install
-
-Or install it yourself as:
-
-    $ gem install yfinrb
-
 ---
 
 ## Graphing
 
-To graph any of the series, per the information [here](https://github.com/ankane/vega-ruby#exporting-charts-experimental), you will need to run 
+To graph any of the series using [Vega](https://github.com/ankane/vega-ruby), per the information [here](https://github.com/ankane/vega-ruby#exporting-charts-experimental), you will need to run 
 
 ```sh
 yarn add vega-cli vega-lite
@@ -228,11 +209,16 @@ Then, from within irb, you can generate charts, e.g.,
 
 ```ruby
 > msft = Yfinrb::Ticker.new("MSFT")
+# => 
+# #<Yfinrb::Ticker:0x000000011e6d50a0
+# ...
 
 > df = msft.history(period: '3y', interval: '1d')
+# => 
+# shape: (754, 10)
+# ...
 
 > df.insert_at_idx(df.columns.length, Yfinrb.ema(df, column: 'Adj Close', window: 5))
-
 # => 
 # shape: (753, 11)
 # ┌────────────┬────────────┬────────────┬────────────┬───┬───────────┬───────────────┬──────────────┬──────────────────────┐
@@ -254,14 +240,35 @@ Then, from within irb, you can generate charts, e.g.,
 # └────────────┴────────────┴────────────┴────────────┴───┴───────────┴───────────────┴──────────────┴──────────────────────┘ 
 
 > File.binwrite('/tmp/chart.png',df.plot("Timestamps", "EMA(5) for Adj Close", type: "line", width:800, height:500).to_png)
+# => 44913 
+
 ```
 
 Then the following image should be saved at the specified location.
 
-![alt text](./chart.png?raw=true)
+![A chart generated with Yfinrb using Vega](./chart.png?raw=true)
 
 PNG, SVG, and PDF output formats are supported directly.  See [this page](https://github.com/ankane/vega-ruby) for more information in constructing supported charts.
 
+While it _has_not_been_tested_yet_, images _should_ be able to be produced interactively using [iruby](https://github.com/SciRuby/iruby) operating in a [Jupyter environment](https://github.com/jupyterlab).
+
+---
+
+## Installation
+
+Add this line to your application's Gemfile:
+
+```ruby
+gem 'yfinrb'
+```
+
+And then execute:
+
+    $ bundle install
+
+Or install it yourself as:
+
+    $ gem install yfinrb
 
 ---
 
