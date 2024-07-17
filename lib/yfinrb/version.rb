@@ -1,3 +1,3 @@
 class Yfinrb
-  VERSION = "0.2.13"
+  VERSION = "0.2.15"
 end

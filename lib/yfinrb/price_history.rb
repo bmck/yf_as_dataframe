@@ -51,11 +51,11 @@ class Yfinrb
       end
 
       data = _get_data(ticker, params, fin, raise_errors)
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} data = #{data.inspect}" }
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} data[chart][result].first.keys = #{data['chart']['result'].first.keys.inspect}" }
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} data[chart][result].first[events] = #{data['chart']['result'].first['events'].inspect}" }
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} data[chart][result].first[events][dividends] = #{data['chart']['result'].first['events']['dividends'].inspect}" }
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} data[chart][result].first[events][splits] = #{data['chart']['result'].first['events']['splits'].inspect}" }
-      # Rails.logger.info { "#{__FILE__}:#{__LINE__} data = #{data.inspect}" }
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} @history = #{@history.inspect}" }
 
       @history_metadata = data["chart"]["result"][0]["meta"] rescue {}
@@ -615,7 +615,7 @@ class Yfinrb
     end
 
     def _get_data(ticker, params, fin, raise_errors)
-      url = "https://query2.finance.yahoo.com/v8/finance/chart/#{ticker}"
+      url = "https://query2.finance.yahoo.com/v8/finance/chart/#{CGI.escape ticker}"
       # url = "https://query1.finance.yahoo.com/v7/finance/download/#{ticker}" ... Deprecated
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} url = #{url}" }
       data = nil
@@ -710,7 +710,7 @@ class Yfinrb
         # startDt = quotes.index[0].floor('D')
         startDt = quotes['Timestamps'].to_a.map(&:to_date).min
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} startDt = #{startDt.inspect}" }
-        endDt = fin.present? ? fin : Time.at(DateTime.now.tomorrow).to_i
+        endDt = fin.present? ? fin.to_date : Time.at(DateTime.now.tomorrow).to_i
 
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} @history[events][dividends] = #{@history['events']["dividends"].inspect}" }
         # divi = {}

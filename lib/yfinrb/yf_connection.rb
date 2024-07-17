@@ -66,7 +66,9 @@ class Yfinrb
       joiner = ('?'.in?(request_args[:url]) ? '&' : '?')
       u += (joiner + CGI.unescape(request_args[:params].to_query)) unless request_args[:params].empty?
 
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} u=#{u}, options = #{options.inspect}" }
       response = ::HTTParty.get(u, options)
+      # Rails.logger.info { "#{__FILE__}:#{__LINE__} response=#{response.inspect}" }
 
       return response
     end
