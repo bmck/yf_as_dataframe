@@ -1,4 +1,4 @@
-class Yfinrb
+class YfAsDataframe
   class YfinanceException < StandardError
     attr_reader :msg
   end

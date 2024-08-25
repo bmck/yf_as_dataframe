@@ -1,4 +1,4 @@
-class Yfinrb
+class YfAsDataframe
   class Tickers
     def initialize(tickers, session = nil)
       tickers = tickers.is_a?(Array) ? tickers : tickers.split(',')

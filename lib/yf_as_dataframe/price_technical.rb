@@ -1,6 +1,6 @@
 require 'tulirb'
 
-class Yfinrb
+class YfAsDataframe
   module PriceTechnical
     extend ActiveSupport::Concern
     include ActionView::Helpers::NumberHelper

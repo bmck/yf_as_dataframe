@@ -1,9 +1,9 @@
-class Yfinrb
+class YfAsDataframe
   class Ticker
     ROOT_URL = 'https://finance.yahoo.com'.freeze
     BASE_URL = 'https://query2.finance.yahoo.com'.freeze
 
-    include Yfinrb::YfConnection
+    include YfAsDataframe::YfConnection
 
     attr_accessor :tz, :proxy, :isin, :timeout
     attr_reader :error_message, :ticker
@@ -27,17 +27,17 @@ class Yfinrb
       @expirations = {}
       @underlying = {}
 
-      @ticker = (Yfinrb::Utils.is_isin(ticker.upcase) ? Yfinrb::Utils.get_ticker_by_isin(ticker.upcase, nil, @session) : ticker).upcase
+      @ticker = (YfAsDataframe::Utils.is_isin(ticker.upcase) ? YfAsDataframe::Utils.get_ticker_by_isin(ticker.upcase, nil, @session) : ticker).upcase
 
       yfconn_initialize
     end
 
-    include Yfinrb::PriceHistory
-    include Yfinrb::Analysis
-    include Yfinrb::Fundamentals
-    include Yfinrb::Holders
-    include Yfinrb::Quote
-    include Yfinrb::Financials
+    include YfAsDataframe::PriceHistory
+    include YfAsDataframe::Analysis
+    include YfAsDataframe::Fundamentals
+    include YfAsDataframe::Holders
+    include YfAsDataframe::Quote
+    include YfAsDataframe::Financials
 
     alias_method :symbol, :ticker
 
@@ -49,13 +49,13 @@ class Yfinrb
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} start = #{start.inspect}, fin = #{fin.inspect}" } 
 
       if start
-        start_ts = Yfinrb::Utils.parse_user_dt(start, tz)
+        start_ts = YfAsDataframe::Utils.parse_user_dt(start, tz)
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} start_ts = #{start_ts}" }
         start = Time.at(start_ts).in_time_zone(tz)
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} start = #{start.inspect}, fin = #{fin.inspect}" } 
       end
       if fin
-        end_ts = Yfinrb::Utils.parse_user_dt(fin, tz)
+        end_ts = YfAsDataframe::Utils.parse_user_dt(fin, tz)
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} end_ts = #{end_ts}" }
         fin = Time.at(end_ts).in_time_zone(tz)
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} start = #{start.inspect}, fin = #{fin.inspect}" } 

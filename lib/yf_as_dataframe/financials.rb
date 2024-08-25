@@ -1,6 +1,6 @@
 require 'polars-df'
 
-class Yfinrb
+class YfAsDataframe
   module Financials
     include ActiveSupport::Inflector
 
@@ -56,7 +56,7 @@ class Yfinrb
 
       if pretty
         #   data = data.dup
-        #   data.index = Yfinrb::Utils.camel2title(data.index, sep: ' ', acronyms: ["PPE"])
+        #   data.index = YfAsDataframe::Utils.camel2title(data.index, sep: ' ', acronyms: ["PPE"])
       end
 
       as_dict ? data.to_h : data
@@ -67,7 +67,7 @@ class Yfinrb
 
       if pretty
         #   data = data.dup
-        #   data.index = Yfinrb::Utils.camel2title(data.index, sep: ' ', acronyms: ["EBIT", "EBITDA", "EPS", "NI"])
+        #   data.index = YfAsDataframe::Utils.camel2title(data.index, sep: ' ', acronyms: ["EBIT", "EBITDA", "EPS", "NI"])
       end
 
       as_dict ? data.to_h : data
@@ -79,7 +79,7 @@ class Yfinrb
 
       if pretty
         #   data = data.dup
-        #   data.index = Yfinrb::Utils.camel2title(data.index, sep: ' ', acronyms: ["PPE"])
+        #   data.index = YfAsDataframe::Utils.camel2title(data.index, sep: ' ', acronyms: ["PPE"])
       end
 
       as_dict ? data.to_h : data

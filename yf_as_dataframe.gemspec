@@ -1,24 +1,24 @@
 # frozen_string_literal: true
 
-require_relative "lib/yfinrb/version"
+require_relative "lib/yf_as_dataframe/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "yfinrb"
-  spec.version = Yfinrb::VERSION
+  spec.name = "yf_as_dataframe"
+  spec.version = YfAsDataframe::VERSION
   spec.authors = ["Bill McKinnon"]
   spec.email = ["bill@bmck.org"]
 
   spec.summary = "A shameless port of python's yfinance module to ruby"
   spec.description = "Download market data from Yahoo! Finance's API"
-  spec.homepage = "https://www.github.com/bmck/yfinrb"
+  spec.homepage = "https://www.github.com/bmck/yf_as_dataframe"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.0.0"
 
   # spec.metadata["allowed_push_host"] = "TODO: Set to your gem server 'https://example.com'"
 
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "https://github.com/bmck/yfinrb"
-  spec.metadata["changelog_uri"] = "https://github.com/bmck/yfinrb/CHANGELOG.rst"
+  spec.metadata["source_code_uri"] = "https://github.com/bmck/yf_as_dataframe"
+  spec.metadata["changelog_uri"] = "https://github.com/bmck/yf_as_dataframe/CHANGELOG.rst"
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.

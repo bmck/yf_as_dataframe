@@ -1,4 +1,4 @@
-class Yfinrb
+class YfAsDataframe
   module Fundamentals
     extend ActiveSupport::Concern
 

@@ -1,4 +1,4 @@
-class Yfinrb
+class YfAsDataframe
   module Holders
     extend ActiveSupport::Concern
     # include YfConnection

@@ -2,7 +2,7 @@
 
 source "https://rubygems.org"
 
-# Specify your gem's dependencies in yfinrb.gemspec
+# Specify your gem's dependencies in yf_as_dataframe.gemspec
 gemspec
 
 gem "rake", "~> 13.0"

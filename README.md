@@ -1,4 +1,4 @@
-# Yfinrb
+# YfAsDataframe
 
 # Download market data from Yahoo! Finance's API
 
@@ -11,7 +11,7 @@
 **Yahoo!, Y!Finance, and Yahoo! finance are registered trademarks of
 Yahoo, Inc.**
 
-yfinrb is **not** affiliated, endorsed, or vetted by Yahoo, Inc. It is
+yf_as_dataframe is **not** affiliated, endorsed, or vetted by Yahoo, Inc. It is
 an open-source tool that uses Yahoo's publicly available APIs, and is
 intended for research and educational purposes.
 
@@ -36,7 +36,7 @@ The `Ticker` class, which allows you to access ticker data from Yahoo!'s unoffic
 
 ```ruby
 
-msft = Yfinrb::Ticker.new("MSFT")
+msft = YfAsDataframe::Ticker.new("MSFT")
 
 # get all stock info
 msft.info
@@ -102,11 +102,11 @@ opt = msft.option_chain('2026-12-18')
 # technical operations, using the Tulirb gem, which provides bindings to 
 # the Tulip technical indicators library
 h = msft.history(period: '2y', interval: '1d')
-Yfinrb.ad(h)
+YfAsDataframe.ad(h)
 
 # then
-h.insert_at_idx(h.columns.length, Yfinrb.ad(h))
-h['ad_results'] = Yfinrb.ad(h)
+h.insert_at_idx(h.columns.length, YfAsDataframe.ad(h))
+h['ad_results'] = YfAsDataframe.ad(h)
 
 ```
 
@@ -116,83 +116,83 @@ Most of the indicators are found [here](https://tulipindicators.org/) and [here]
 
 df = msft.history(period: '3y', interval: '1d') # for example
 
-Yfinrb.ad(df)
-Yfinrb.adosc(df, short_window: 2, long_window: 5)
-Yfinrb.adx(df, column: 'Adj Close', window: 5)
-Yfinrb.adxr(df, column: 'Adj Close', window: 5)
-Yfinrb.avg_daily_trading_volume(df, window: 20)
-Yfinrb.ao(df)
-Yfinrb.apo(df, column: 'Adj Close', short_window: 12, long_window: 29)
-Yfinrb.aroon(df, window: 20)
-Yfinrb.aroonosc(df, window: 20)
-Yfinrb.avg_price(df)
-Yfinrb.atr(df, window: 20)
-Yfinrb.bbands(df, column: 'Adj Close', window: 20, stddev: 1 )
-Yfinrb.bop(df)
-Yfinrb.cci(df, window: 20)
-Yfinrb.cmo(df, column: 'Adj Close', window: 20)
-Yfinrb.cvi(df, window: 20)
-Yfinrb.dema(df, column: 'Adj Close', window: 20)
-Yfinrb.di(df, window: 20)
-Yfinrb.dm(df, window: 20)
-Yfinrb.dpo(df, column: 'Adj Close', window: 20)
-Yfinrb.dx(df, window: 20)
-Yfinrb.ema(df, column: 'Adj Close', window: 5) 
-Yfinrb.emv(df)
-Yfinrb.fisher(df, window: 20) 
-Yfinrb.fosc(df, window: 20) 
-Yfinrb.hma(df, column: 'Adj Close', window: 5) 
-Yfinrb.kama(df, column: 'Adj Close', window: 5)
-Yfinrb.kvo(df, short_window: 5, long_window: 20)
-Yfinrb.linreg(df, column: 'Adj Close', window: 20)
-Yfinrb.linregintercept(df, column: 'Adj Close', window: 20)
-Yfinrb.linregslope(df, column: 'Adj Close', window: 20)
-Yfinrb.macd(df, column: 'Adj Close', short_window: 12, long_window: 26, signal_window: 9)
-Yfinrb.marketfi(df)
-Yfinrb.mass(df, window: 20)
-Yfinrb.max(df, column: 'Adj Close', window: 20)
-Yfinrb.md(df, column: 'Adj Close', window: 20)
-Yfinrb.median_price(df)
-Yfinrb.mfi(df, window: 20)
-Yfinrb.min(df, column: 'Adj Close', window: 20)
-Yfinrb.mom(df, column: 'Adj Close', window: 5)
-Yfinrb.moving_avgs(df, window: 20)
-Yfinrb.natr(df, window: 20)
-Yfinrb.nvi(df)
-Yfinrb.obv(df)
-Yfinrb.ppo(df, column: 'Adj Close', short_window: 12, long_window: 26)
-Yfinrb.psar(df, acceleration_factor_step: 0.2, acceleration_factor_maximum: 2)
-Yfinrb.pvi(df)
-Yfinrb.qstick(df, window: 20)
-Yfinrb.roc(df, column: 'Adj Close', window: 20)
-Yfinrb.rocr(df, column: 'Adj Close', window: 20)
-Yfinrb.rsi(df, window: 20)
-Yfinrb.sma(df, column: 'Adj Close', window: 20)
-Yfinrb.stddev(df, column: 'Adj Close', window: 20)
-Yfinrb.stderr(df, column: 'Adj Close', window: 20)
-Yfinrb.stochrsi(df, column: 'Adj Close', window: 20)
-Yfinrb.sum(df, column: 'Adj Close', window: 20)
-Yfinrb.tema(df, column: 'Adj Close', window: 20)
-Yfinrb.tr(df, column: 'Adj Close')
-Yfinrb.trima(df, column: 'Adj Close', window: 20)
-Yfinrb.trix(df, column: 'Adj Close', window: 20)
-Yfinrb.trima(df, column: 'Adj Close', window: 20)
-Yfinrb.tsf(df, column: 'Adj Close', window: 20)
-Yfinrb.typical_price(df)
-Yfinrb.ultosc(df, short_window: 5, medium_window: 12, long_window: 26)
-Yfinrb.weighted_close_price(df)
-Yfinrb.var(df, column: 'Adj Close', window: 20)
-Yfinrb.vhf(df, column: 'Adj Close', window: 20)
-Yfinrb.vidya(df, column: 'Adj Close', short_window: 5, long_window: 20, alpha: 0.2)
-Yfinrb.volatility(df, column: 'Adj Close', window: 20)
-Yfinrb.vosc(df, column: 'Adj Close', short_window: 5, long_window: 20)
-Yfinrb.vol_weighted_moving_avg(df, window: 20)
-Yfinrb.wad(df)
-Yfinrb.wcprice(df)
-Yfinrb.wilders(df, column: 'Adj Close', window: 20)
-Yfinrb.willr(df, window: 20)
-Yfinrb.wma(df, column: 'Adj Close', window: 5)
-Yfinrb.zlema(df, column: 'Adj Close', window: 5)
+YfAsDataframe.ad(df)
+YfAsDataframe.adosc(df, short_window: 2, long_window: 5)
+YfAsDataframe.adx(df, column: 'Adj Close', window: 5)
+YfAsDataframe.adxr(df, column: 'Adj Close', window: 5)
+YfAsDataframe.avg_daily_trading_volume(df, window: 20)
+YfAsDataframe.ao(df)
+YfAsDataframe.apo(df, column: 'Adj Close', short_window: 12, long_window: 29)
+YfAsDataframe.aroon(df, window: 20)
+YfAsDataframe.aroonosc(df, window: 20)
+YfAsDataframe.avg_price(df)
+YfAsDataframe.atr(df, window: 20)
+YfAsDataframe.bbands(df, column: 'Adj Close', window: 20, stddev: 1 )
+YfAsDataframe.bop(df)
+YfAsDataframe.cci(df, window: 20)
+YfAsDataframe.cmo(df, column: 'Adj Close', window: 20)
+YfAsDataframe.cvi(df, window: 20)
+YfAsDataframe.dema(df, column: 'Adj Close', window: 20)
+YfAsDataframe.di(df, window: 20)
+YfAsDataframe.dm(df, window: 20)
+YfAsDataframe.dpo(df, column: 'Adj Close', window: 20)
+YfAsDataframe.dx(df, window: 20)
+YfAsDataframe.ema(df, column: 'Adj Close', window: 5) 
+YfAsDataframe.emv(df)
+YfAsDataframe.fisher(df, window: 20) 
+YfAsDataframe.fosc(df, window: 20) 
+YfAsDataframe.hma(df, column: 'Adj Close', window: 5) 
+YfAsDataframe.kama(df, column: 'Adj Close', window: 5)
+YfAsDataframe.kvo(df, short_window: 5, long_window: 20)
+YfAsDataframe.linreg(df, column: 'Adj Close', window: 20)
+YfAsDataframe.linregintercept(df, column: 'Adj Close', window: 20)
+YfAsDataframe.linregslope(df, column: 'Adj Close', window: 20)
+YfAsDataframe.macd(df, column: 'Adj Close', short_window: 12, long_window: 26, signal_window: 9)
+YfAsDataframe.marketfi(df)
+YfAsDataframe.mass(df, window: 20)
+YfAsDataframe.max(df, column: 'Adj Close', window: 20)
+YfAsDataframe.md(df, column: 'Adj Close', window: 20)
+YfAsDataframe.median_price(df)
+YfAsDataframe.mfi(df, window: 20)
+YfAsDataframe.min(df, column: 'Adj Close', window: 20)
+YfAsDataframe.mom(df, column: 'Adj Close', window: 5)
+YfAsDataframe.moving_avgs(df, window: 20)
+YfAsDataframe.natr(df, window: 20)
+YfAsDataframe.nvi(df)
+YfAsDataframe.obv(df)
+YfAsDataframe.ppo(df, column: 'Adj Close', short_window: 12, long_window: 26)
+YfAsDataframe.psar(df, acceleration_factor_step: 0.2, acceleration_factor_maximum: 2)
+YfAsDataframe.pvi(df)
+YfAsDataframe.qstick(df, window: 20)
+YfAsDataframe.roc(df, column: 'Adj Close', window: 20)
+YfAsDataframe.rocr(df, column: 'Adj Close', window: 20)
+YfAsDataframe.rsi(df, window: 20)
+YfAsDataframe.sma(df, column: 'Adj Close', window: 20)
+YfAsDataframe.stddev(df, column: 'Adj Close', window: 20)
+YfAsDataframe.stderr(df, column: 'Adj Close', window: 20)
+YfAsDataframe.stochrsi(df, column: 'Adj Close', window: 20)
+YfAsDataframe.sum(df, column: 'Adj Close', window: 20)
+YfAsDataframe.tema(df, column: 'Adj Close', window: 20)
+YfAsDataframe.tr(df, column: 'Adj Close')
+YfAsDataframe.trima(df, column: 'Adj Close', window: 20)
+YfAsDataframe.trix(df, column: 'Adj Close', window: 20)
+YfAsDataframe.trima(df, column: 'Adj Close', window: 20)
+YfAsDataframe.tsf(df, column: 'Adj Close', window: 20)
+YfAsDataframe.typical_price(df)
+YfAsDataframe.ultosc(df, short_window: 5, medium_window: 12, long_window: 26)
+YfAsDataframe.weighted_close_price(df)
+YfAsDataframe.var(df, column: 'Adj Close', window: 20)
+YfAsDataframe.vhf(df, column: 'Adj Close', window: 20)
+YfAsDataframe.vidya(df, column: 'Adj Close', short_window: 5, long_window: 20, alpha: 0.2)
+YfAsDataframe.volatility(df, column: 'Adj Close', window: 20)
+YfAsDataframe.vosc(df, column: 'Adj Close', short_window: 5, long_window: 20)
+YfAsDataframe.vol_weighted_moving_avg(df, window: 20)
+YfAsDataframe.wad(df)
+YfAsDataframe.wcprice(df)
+YfAsDataframe.wilders(df, column: 'Adj Close', window: 20)
+YfAsDataframe.willr(df, window: 20)
+YfAsDataframe.wma(df, column: 'Adj Close', window: 5)
+YfAsDataframe.zlema(df, column: 'Adj Close', window: 5)
 ```
 
 ---
@@ -208,9 +208,9 @@ yarn add vega-cli vega-lite
 Then, from within irb, you can generate charts, e.g., 
 
 ```ruby
-> msft = Yfinrb::Ticker.new("MSFT")
+> msft = YfAsDataframe::Ticker.new("MSFT")
 # => 
-# #<Yfinrb::Ticker:0x000000011e6d50a0
+# #<YfAsDataframe::Ticker:0x000000011e6d50a0
 # ...
 
 > df = msft.history(period: '3y', interval: '1d')
@@ -218,7 +218,7 @@ Then, from within irb, you can generate charts, e.g.,
 # shape: (754, 10)
 # ...
 
-> df.insert_at_idx(df.columns.length, Yfinrb.ema(df, column: 'Adj Close', window: 5))
+> df.insert_at_idx(df.columns.length, YfAsDataframe.ema(df, column: 'Adj Close', window: 5))
 # => 
 # shape: (753, 11)
 # ┌────────────┬────────────┬────────────┬────────────┬───┬───────────┬───────────────┬──────────────┬──────────────────────┐
@@ -246,7 +246,7 @@ Then, from within irb, you can generate charts, e.g.,
 
 Then the following image should be saved at the specified location.
 
-![A chart generated with Yfinrb using Vega](./chart.png?raw=true)
+![A chart generated with YfAsDataframe using Vega](./chart.png?raw=true)
 
 PNG, SVG, and PDF output formats are supported directly.  See [this page](https://github.com/ankane/vega-ruby) for more information in constructing supported charts.
 
@@ -259,7 +259,7 @@ While it _has not been tested yet_, images _should_ be able to be produced inter
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'yfinrb'
+gem 'yf_as_dataframe'
 ```
 
 And then execute:
@@ -268,7 +268,7 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install yfinrb
+    $ gem install yf_as_dataframe
 
 ---
 
@@ -278,17 +278,17 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/bmck/yfinrb.
+Bug reports and pull requests are welcome on GitHub at https://github.com/bmck/yf_as_dataframe.
 
 ---
 
 ### Legal Stuff
 
-The **yfinrb** gem is available as open source under the **MIT Software License** (https://opensource.org/licenses/MIT). See
+The **yf_as_dataframe** gem is available as open source under the **MIT Software License** (https://opensource.org/licenses/MIT). See
 the [LICENSE.txt](./LICENSE.txt) file in the release for details.
 
 
-AGAIN - yfinrb is **not** affiliated, endorsed, or vetted by Yahoo, Inc. It's
+AGAIN - yf_as_dataframe is **not** affiliated, endorsed, or vetted by Yahoo, Inc. It's
 an open-source tool that uses Yahoo's publicly available APIs, and is
 intended for research and educational purposes. You should refer to Yahoo!'s terms of use
 ([here](https://policies.yahoo.com/us/en/yahoo/terms/product-atos/apiforydn/index.htm),

@@ -1,4 +1,4 @@
-class Yfinrb
+class YfAsDataframe
   module Analysis
     extend ActiveSupport::Concern
 
