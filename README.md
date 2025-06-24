@@ -197,6 +197,71 @@ YfAsDataframe.zlema(df, column: 'Adj Close', window: 5)
 
 ---
 
+## TLS Fingerprinting Protection
+
+**New in v0.4.0**: This gem now includes built-in support for [curl-impersonate](https://github.com/lwthiker/curl-impersonate). The curl-impersonate integration is **enabled by default** in v0.4.0+. Existing code will automatically use curl-impersonate to bypass TLS fingerprinting:
+
+### Installation Requirements
+
+To use the TLS fingerprinting protection, you need to install curl-impersonate:
+
+```bash
+# macOS
+brew tap shakacode/brew
+brew install curl-impersonate
+
+# Verify installation
+ls -la /usr/local/bin/curl_*
+```
+
+### Custom Installation Directory
+
+If you have curl-impersonate installed in a different directory, you can set the `CURL_IMPERSONATE_DIR` environment variable:
+
+```bash
+# Set custom directory
+export CURL_IMPERSONATE_DIR="/opt/curl-impersonate/bin"
+
+# Or set it for a single command
+CURL_IMPERSONATE_DIR="/opt/curl-impersonate/bin" ruby your_script.rb
+```
+
+The default directory is `/usr/local/bin` if the environment variable is not set.
+
+### Configuration (Optional)
+
+You can configure the curl-impersonate behavior if needed:
+
+```ruby
+# Disable curl-impersonate (use HTTParty only)
+YfAsDataframe::YfConnection.enable_curl_impersonate(false)
+
+# Disable fallback (fail if curl-impersonate fails)
+YfAsDataframe::YfConnection.enable_curl_impersonate_fallback(false)
+
+# Set timeout
+YfAsDataframe::YfConnection.set_curl_impersonate_timeout(45)
+
+# Check available executables
+executables = YfAsDataframe::YfConnection.get_available_curl_impersonate_executables
+puts "Available: #{executables.length} executables"
+
+# Check which directory is being used
+puts "Using directory: #{YfAsDataframe::CurlImpersonateIntegration.executable_directory}"
+```
+
+### How It Works
+
+1. **Automatic Detection**: Dynamically finds curl-impersonate executables in the configured directory
+2. **Default Behavior**: Uses curl-impersonate for all requests by default
+3. **Seamless Fallback**: Falls back to HTTParty if curl-impersonate fails
+4. **Browser Rotation**: Randomly selects from Chrome, Firefox, Edge, and Safari configurations
+5. **Zero Interface Changes**: All existing method signatures remain the same
+
+For more detailed information, see [MINIMAL_INTEGRATION.md](MINIMAL_INTEGRATION.md).
+
+---
+
 ## Graphing
 
 To graph any of the series using [Vega](https://github.com/ankane/vega-ruby), per the information [here](https://github.com/ankane/vega-ruby#exporting-charts-experimental), you will need to run 

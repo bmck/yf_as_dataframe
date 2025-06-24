@@ -8,7 +8,7 @@ require 'httparty'
 
 class YfAsDataframe
   module YfConnection
-    extend ActiveSupport::Concern
+    extend ::ActiveSupport::Concern
     # extend HTTParty
 
     # """
