@@ -1,3 +1,5 @@
+require 'logger'
+
 class YfAsDataframe
   module Holders
     extend ActiveSupport::Concern
@@ -97,7 +99,7 @@ class YfAsDataframe
         result = get_raw_json(QUOTE_SUMMARY_URL + "/#{symbol}", user_agent_headers=user_agent_headers, params=params_dict)
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} result = #{result.inspect}" }
       rescue Exception => e
-        Rails.logger.error("ERROR: #{e.message}")
+        Logger.new(STDOUT).error("ERROR: #{e.message}")
         return nil
       end
       return result
@@ -133,7 +135,7 @@ class YfAsDataframe
 
     def _parse_result(result)
       data = result.parsed_response['quoteSummary']['result'].first #.dig('quoteSummary', 'result', 0)
-      Rails.logger.info { "#{__FILE__}:#{__LINE__} data = #{data.inspect}" }
+      Logger.new(STDOUT).info { "#{__FILE__}:#{__LINE__} data = #{data.inspect}" }
       _parse_institution_ownership(data['institutionOwnership'])
       _parse_fund_ownership(data['fundOwnership'])
       _parse_major_holders_breakdown(data['majorHoldersBreakdown'])

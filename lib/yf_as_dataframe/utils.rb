@@ -261,37 +261,80 @@ class YfAsDataframe
     def self.interval_to_timedelta(interval)
       case interval
       when '1mo'
-        1.month
+        # Calculate 1 month from now to get accurate days
+        now = Time.now
+        next_month = Time.new(now.year, now.month + 1, now.day)
+        # Handle year rollover
+        next_month = Time.new(now.year + 1, 1, now.day) if next_month.month == 1
+        (next_month - now).to_i
       when '2mo'
-        2.months
+        # Calculate 2 months from now
+        now = Time.now
+        next_month = Time.new(now.year, now.month + 2, now.day)
+        # Handle year rollover
+        next_month = Time.new(now.year + 1, next_month.month, now.day) if next_month.month <= 2
+        (next_month - now).to_i
       when '3mo'
-        3.months
+        # Calculate 3 months from now
+        now = Time.now
+        next_month = Time.new(now.year, now.month + 3, now.day)
+        # Handle year rollover
+        next_month = Time.new(now.year + 1, next_month.month, now.day) if next_month.month <= 3
+        (next_month - now).to_i
       when '6mo'
-        6.months
+        # Calculate 6 months from now
+        now = Time.now
+        next_month = Time.new(now.year, now.month + 6, now.day)
+        # Handle year rollover
+        next_month = Time.new(now.year + 1, next_month.month, now.day) if next_month.month <= 6
+        (next_month - now).to_i
       when '9mo'
-        9.months
+        # Calculate 9 months from now
+        now = Time.now
+        next_month = Time.new(now.year, now.month + 9, now.day)
+        # Handle year rollover
+        next_month = Time.new(now.year + 1, next_month.month, now.day) if next_month.month <= 9
+        (next_month - now).to_i
       when '12mo'
-        1.year
+        # Calculate 12 months (1 year) from now
+        now = Time.now
+        next_year = Time.new(now.year + 1, now.month, now.day)
+        (next_year - now).to_i
       when '1y'
-        1.year
+        # Calculate 1 year from now
+        now = Time.now
+        next_year = Time.new(now.year + 1, now.month, now.day)
+        (next_year - now).to_i
       when '2y'
-        2.year
+        # Calculate 2 years from now
+        now = Time.now
+        next_year = Time.new(now.year + 2, now.month, now.day)
+        (next_year - now).to_i
       when '3y'
-        3.year
+        # Calculate 3 years from now
+        now = Time.now
+        next_year = Time.new(now.year + 3, now.month, now.day)
+        (next_year - now).to_i
       when '4y'
-        4.year
+        # Calculate 4 years from now
+        now = Time.now
+        next_year = Time.new(now.year + 4, now.month, now.day)
+        (next_year - now).to_i
       when '5y'
-        5.year
+        # Calculate 5 years from now
+        now = Time.now
+        next_year = Time.new(now.year + 5, now.month, now.day)
+        (next_year - now).to_i
       when '1wk'
-        1.week
+        7.days
       when '2wk'
-        2.week
+        14.days
       when '3wk'
-        3.week
+        21.days
       when '4wk'
-        4.week
+        28.days
       else
-        Rails.logger.warn { "#{__FILE__}:#{__LINE__} #{interval} not a recognized interval" }
+        # Logger.new(STDOUT).warn { "#{__FILE__}:#{__LINE__} #{interval} not a recognized interval" }
         interval
       end
     end

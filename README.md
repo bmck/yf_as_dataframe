@@ -12,7 +12,7 @@
 Yahoo, Inc.**
 
 yf_as_dataframe is **not** affiliated, endorsed, or vetted by Yahoo, Inc. It is
-an open-source tool that uses Yahoo's publicly available APIs, and is
+an open-source tool that uses Yahoo's publicly available APIs, and is **only**
 intended for research and educational purposes.
 
 **You should refer to Yahoo!'s terms of use**
@@ -216,7 +216,9 @@ ls -la /usr/local/bin/curl_*
 
 ### Custom Installation Directory
 
-If you have curl-impersonate installed in a different directory, you can set the `CURL_IMPERSONATE_DIR` environment variable:
+The codebase will look for the location of the curl-impersonate binaries per the `CURL_IMPERSONATE_DIR` environment variable;
+if it is not assigned, the default location of the binaries is  `/usr/local/bin`.
+The code will randomly select one of the binaries (expected to be named "curl_chrome*", "curl_ff*", "curl_edge*", etc.) for its communications with the servers.
 
 ```bash
 # Set custom directory
@@ -225,8 +227,6 @@ export CURL_IMPERSONATE_DIR="/opt/curl-impersonate/bin"
 # Or set it for a single command
 CURL_IMPERSONATE_DIR="/opt/curl-impersonate/bin" ruby your_script.rb
 ```
-
-The default directory is `/usr/local/bin` if the environment variable is not set.
 
 ### Configuration (Optional)
 
@@ -249,14 +249,6 @@ puts "Available: #{executables.length} executables"
 # Check which directory is being used
 puts "Using directory: #{YfAsDataframe::CurlImpersonateIntegration.executable_directory}"
 ```
-
-### How It Works
-
-1. **Automatic Detection**: Dynamically finds curl-impersonate executables in the configured directory
-2. **Default Behavior**: Uses curl-impersonate for all requests by default
-3. **Seamless Fallback**: Falls back to HTTParty if curl-impersonate fails
-4. **Browser Rotation**: Randomly selects from Chrome, Firefox, Edge, and Safari configurations
-5. **Zero Interface Changes**: All existing method signatures remain the same
 
 For more detailed information, see [MINIMAL_INTEGRATION.md](MINIMAL_INTEGRATION.md).
 

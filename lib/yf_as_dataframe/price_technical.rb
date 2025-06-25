@@ -3,7 +3,6 @@ require 'tulirb'
 class YfAsDataframe
   module PriceTechnical
     extend ActiveSupport::Concern
-    include ActionView::Helpers::NumberHelper
 
 
     def ad(df)

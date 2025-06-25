@@ -1,3 +1,6 @@
+require 'tzinfo'
+require 'logger'
+
 class YfAsDataframe
   class Ticker
     ROOT_URL = 'https://finance.yahoo.com'.freeze
@@ -44,7 +47,7 @@ class YfAsDataframe
     def symbol; @ticker; end
 
     def shares_full(start: nil, fin: nil)
-      logger = Rails.logger
+      logger = Logger.new(STDOUT)
 
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} start = #{start.inspect}, fin = #{fin.inspect}" } 
 
@@ -63,7 +66,7 @@ class YfAsDataframe
 
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} start = #{start.inspect}, fin = #{fin.inspect}" } 
 
-      dt_now = DateTime.now.in_time_zone(tz)
+      dt_now = Time.now.in_time_zone(tz)
       fin ||= dt_now
       start ||= (fin - 548.days).midnight
 
@@ -107,7 +110,7 @@ class YfAsDataframe
     def shares
       return @shares unless @shares.nil?
 
-      full_shares = shares_full(start: DateTime.now.utc.to_date-548.days, fin: DateTime.now.utc.to_date)
+      full_shares = shares_full(start: Time.now.utc.to_date-548.days, fin: Time.now.utc.to_date)
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} full_shares = #{full_shares.inspect}" }
 
       # if shares.nil?
@@ -150,7 +153,7 @@ class YfAsDataframe
       # """
       return @earnings_dates[limit] if @earnings_dates && @earnings_dates[limit]
 
-      logger = Rails.logger
+      logger = Logger.new(STDOUT)
 
       page_size = [limit, 100].min  # YF caps at 100, don't go higher
       page_offset = 0

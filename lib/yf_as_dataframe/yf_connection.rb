@@ -1,3 +1,5 @@
+require 'active_support'
+require 'active_support/concern'
 # require 'requests'
 # require 'requests_cache'
 require 'thread'
@@ -5,6 +7,8 @@ require 'date'
 require 'nokogiri'
 require 'zache'
 require 'httparty'
+require 'uri'
+require 'json'
 
 class YfAsDataframe
   module YfConnection
@@ -94,18 +98,50 @@ class YfAsDataframe
       @@cookie = nil
       @@cookie_strategy = 'basic'
       @@cookie_lock = ::Mutex.new()
+      
+      # Add session tracking
+      @@session_created_at = Time.now
+      @@session_refresh_interval = 3600 # 1 hour
+      @@request_count = 0
+      @@last_request_time = nil
+      
+      # Circuit breaker state
+      @@circuit_breaker_state = :closed # :closed, :open, :half_open
+      @@failure_count = 0
+      @@last_failure_time = nil
+      @@circuit_breaker_threshold = 3
+      @@circuit_breaker_timeout = 60 # seconds
+      @@circuit_breaker_base_timeout = 60 # seconds
     end
 
 
     def get(url, headers=nil, params=nil)
-      # Important: treat input arguments as immutable.
-      # Rails.logger.info { "#{__FILE__}:#{__LINE__} url = #{url}, headers = #{headers}, params=#{params.inspect}" }
+      # Check circuit breaker first
+      unless circuit_breaker_allow_request?
+        raise RuntimeError.new("Circuit breaker is open - too many recent failures. Please try again later.")
+      end
+
+      # Add request throttling to be respectful of rate limits
+      throttle_request
+      
+      # Track session usage
+      track_session_usage
+      
+      # Refresh session if needed
+      refresh_session_if_needed
+      
+      # Only fetch crumb for /v7/finance/download endpoint
+      crumb_needed = url.include?('/v7/finance/download')
 
       headers ||= {}
       params ||= {}
-      params.merge!(crumb: @@crumb) unless @@crumb.nil?
-      cookie, crumb, strategy = _get_cookie_and_crumb()
-      crumbs = !crumb.nil? ? {'crumb' => crumb} : {}
+      # params.merge!(crumb: @@crumb) unless @@crumb.nil? # Commented out: crumb not needed for most endpoints
+      if crumb_needed
+        crumb = get_crumb_scrape_quote_page(params[:symbol] || params['symbol'])
+        params.merge!(crumb: crumb) unless crumb.nil?
+      end
+      cookie, _, strategy = _get_cookie_and_crumb(crumb_needed)
+      crumbs = {} # crumb logic handled above if needed
 
       request_args = {
         url: url,
@@ -118,17 +154,24 @@ class YfAsDataframe
 
       cookie_hash = ::HTTParty::CookieHash.new
       cookie_hash.add_cookies(@@cookie)
-      options = { headers: headers.dup.merge(@@user_agent_headers).merge({ 'cookie' => cookie_hash.to_cookie_string, 'crumb' => crumb })} #,  debug_output: STDOUT }
+      options = { headers: headers.dup.merge(@@user_agent_headers).merge({ 'cookie' => cookie_hash.to_cookie_string })} #,  debug_output: STDOUT }
 
       u = (request_args[:url]).dup.to_s
-      joiner = ('?'.in?(request_args[:url]) ? '&' : '?')
-      u += (joiner + CGI.unescape(request_args[:params].to_query)) unless request_args[:params].empty?
+      joiner = (request_args[:url].include?('?') ? '&' : '?')
+      u += (joiner + URI.encode_www_form(request_args[:params])) unless request_args[:params].empty?
 
-      # Rails.logger.info { "#{__FILE__}:#{__LINE__} u=#{u}, options = #{options.inspect}" }
-      response = ::HTTParty.get(u, options)
-      # Rails.logger.info { "#{__FILE__}:#{__LINE__} response=#{response.inspect}" }
-
-      return response
+      begin
+        response = ::HTTParty.get(u, options)
+        if response_failure?(response)
+          circuit_breaker_record_failure
+          raise RuntimeError.new("Yahoo Finance request failed: #{response.code} - #{response.body}")
+        end
+        circuit_breaker_record_success
+        return response
+      rescue => e
+        circuit_breaker_record_failure
+        raise e
+      end
     end
 
     alias_method :cache_get, :get
@@ -173,33 +216,17 @@ class YfAsDataframe
       end
     end
 
-    def _get_cookie_and_crumb()
+    def _get_cookie_and_crumb(crumb_needed=false)
       cookie, crumb, strategy = nil, nil, nil
-      # puts "cookie_mode = '#{@@cookie_strategy}'"
-
       @@cookie_lock.synchronize do
-        if @@cookie_strategy == 'csrf'
-          crumb = _get_crumb_csrf()
-          if crumb.nil?
-            # Fail
-            _set_cookie_strategy('basic', have_lock=true)
-            cookie, crumb = __get_cookie_and_crumb_basic()
-            # Rails.logger.info { "#{__FILE__}:#{__LINE__} cookie = #{cookie}, crumb = #{crumb}" }
-          end
-        else
-          # Fallback strategy
+        if crumb_needed
           cookie, crumb = __get_cookie_and_crumb_basic()
-          # Rails.logger.info { "#{__FILE__}:#{__LINE__} cookie = #{cookie}, crumb = #{crumb}" }
-          if cookie.nil? || crumb.nil?
-            # Fail
-            _set_cookie_strategy('csrf', have_lock=true)
-            crumb = _get_crumb_csrf()
-          end
+        else
+          cookie = _get_cookie_basic()
+          crumb = nil
         end
         strategy = @@cookie_strategy
       end
-
-      # Rails.logger.info { "#{__FILE__}:#{__LINE__} cookie = #{cookie}, crumb = #{crumb}, strategy=#{strategy}" }
       return cookie, crumb, strategy
     end
 
@@ -229,18 +256,58 @@ class YfAsDataframe
 
     def _get_crumb_basic()
       return @@crumb unless @@crumb.nil?
-      return nil if (cookie = _get_cookie_basic()).nil?
+      
+      # Retry logic similar to yfinance: try up to 3 times
+      3.times do |attempt|
+        begin
+          # Clear cookie on retry (except first attempt) to get fresh session
+          if attempt > 0
+            @@cookie = nil
+            # Clear curl-impersonate executables cache to force re-selection
+            CurlImpersonateIntegration.instance_variable_set(:@available_executables, nil)
+            # warn "[yf_as_dataframe] Retrying crumb fetch (attempt #{attempt + 1}/3)"
+            # Add delay between retries to be respectful of rate limits
+            sleep(2 ** attempt) # Exponential backoff: 2s, 4s, 8s
+          end
+          
+          return nil if (cookie = _get_cookie_basic()).nil?
 
-      cookie_hash = ::HTTParty::CookieHash.new
-      cookie_hash.add_cookies(cookie)
-      options = {headers: @@user_agent_headers.dup.merge(
-                   { 'cookie' => cookie_hash.to_cookie_string }
-      )} #,  debug_output: STDOUT }
+          cookie_hash = ::HTTParty::CookieHash.new
+          cookie_hash.add_cookies(cookie)
+          options = {headers: @@user_agent_headers.dup.merge(
+                       { 'cookie' => cookie_hash.to_cookie_string }
+          )}
 
-      crumb_response = ::HTTParty.get('https://query1.finance.yahoo.com/v1/test/getcrumb', options)
-      @@crumb = crumb_response.parsed_response
+          crumb_response = ::HTTParty.get('https://query1.finance.yahoo.com/v1/test/getcrumb', options)
+          @@crumb = crumb_response.parsed_response
 
-      return (@@crumb.nil? || '<html>'.in?(@@crumb)) ? nil : @@crumb
+          # Validate crumb: must be short, alphanumeric, no spaces, not an error message
+          if crumb_valid?(@@crumb)
+            # warn "[yf_as_dataframe] Successfully fetched valid crumb on attempt #{attempt + 1}"
+            return @@crumb
+          else
+            # warn "[yf_as_dataframe] Invalid crumb received on attempt #{attempt + 1}: '#{@@crumb.inspect}'"
+            @@crumb = nil
+          end
+        rescue => e
+          # warn "[yf_as_dataframe] Error fetching crumb on attempt #{attempt + 1}: #{e.message}"
+          @@crumb = nil
+        end
+      end
+      
+      # All attempts failed
+      # warn "[yf_as_dataframe] Failed to fetch valid crumb after 3 attempts"
+      raise "Could not fetch a valid Yahoo Finance crumb after 3 attempts"
+    end
+
+    def crumb_valid?(crumb)
+      return false if crumb.nil?
+      return false if crumb.include?('<html>')
+      return false if crumb.include?('Too Many Requests')
+      return false if crumb.strip.empty?
+      return false if crumb.length < 8 || crumb.length > 20
+      return false if crumb =~ /\s/
+      true
     end
 
     def _get_cookie_csrf()
@@ -310,7 +377,8 @@ class YfAsDataframe
       # puts 'reusing crumb'
       return @@crumb unless @@crumb.nil?
       # This cookie stored in session
-      return nil unless _get_cookie_csrf().present?
+      cookie_csrf = _get_cookie_csrf()
+      return nil if cookie_csrf.nil? || (cookie_csrf.respond_to?(:empty?) && cookie_csrf.empty?)
 
       get_args = {
         url: 'https://query2.finance.yahoo.com/v1/test/getcrumb',
@@ -323,7 +391,7 @@ class YfAsDataframe
       @@crumb = r.text
 
       # puts "Didn't receive crumb"
-      return nil if @@crumb.nil? || '<html>'.in?(@@crumb) || @@crumb.length.zero?
+      return nil if @@crumb.nil? || @@crumb.include?('<html>') || @@crumb.length.zero?
       return @@crumb
     end
 
@@ -357,6 +425,125 @@ class YfAsDataframe
     def _load_cookie_basic()
       @@zache.put(:basic, nil, lifetime: 1) unless @@zache.exists?(:basic, dirty: false)
       return @@zache.expired?(:basic) ? nil : @@zache.get(:basic)
+    end
+
+    def throttle_request
+      # Random delay between 0.1 and 0.5 seconds to be respectful of rate limits
+      # Similar to yfinance's approach
+      sleep(rand(0.1..0.5))
+    end
+
+    def track_session_usage
+      @@request_count += 1
+      @@last_request_time = Time.now
+    end
+
+    def refresh_session_if_needed
+      return unless session_needs_refresh?
+      
+      # warn "[yf_as_dataframe] Refreshing session (age: #{session_age} seconds, requests: #{@@request_count})"
+      refresh_session
+    end
+
+    def session_needs_refresh?
+      return true if session_age > @@session_refresh_interval
+      return true if @@request_count > 100 # Refresh after 100 requests
+      return true if @@cookie.nil? || @@crumb.nil?
+      false
+    end
+
+    def session_age
+      Time.now - @@session_created_at
+    end
+
+    def refresh_session
+      @@cookie = nil
+      @@crumb = nil
+      @@session_created_at = Time.now
+      @@request_count = 0
+      # warn "[yf_as_dataframe] Session refreshed"
+    end
+
+    # Circuit breaker methods
+    def circuit_breaker_allow_request?
+      case @@circuit_breaker_state
+      when :closed
+        true
+      when :open
+        if Time.now - @@last_failure_time > @@circuit_breaker_timeout
+          @@circuit_breaker_state = :half_open
+          # warn "[yf_as_dataframe] Circuit breaker transitioning to half-open"
+          true
+        else
+          false
+        end
+      when :half_open
+        true
+      end
+    end
+
+    def circuit_breaker_record_failure
+      @@failure_count += 1
+      @@last_failure_time = Time.now
+      
+      if @@failure_count >= @@circuit_breaker_threshold && @@circuit_breaker_state != :open
+        @@circuit_breaker_state = :open
+        # Exponential backoff: 60s, 120s, 240s, 480s, etc.
+        @@circuit_breaker_timeout = @@circuit_breaker_base_timeout * (2 ** (@@failure_count - @@circuit_breaker_threshold))
+        # warn "[yf_as_dataframe] Circuit breaker opened after #{@@failure_count} failures (timeout: #{@@circuit_breaker_timeout}s)"
+      end
+    end
+
+    def circuit_breaker_record_success
+      if @@circuit_breaker_state == :half_open
+        @@circuit_breaker_state = :closed
+        @@failure_count = 0
+        @@circuit_breaker_timeout = @@circuit_breaker_base_timeout
+        # warn "[yf_as_dataframe] Circuit breaker closed after successful request"
+      elsif @@circuit_breaker_state == :closed
+        # Reset failure count on success
+        @@failure_count = 0
+        @@circuit_breaker_timeout = @@circuit_breaker_base_timeout
+      end
+    end
+
+    def response_failure?(response)
+      return true if response.nil?
+      return true if response.code >= 400
+      return true if response.body.to_s.include?("Too Many Requests")
+      return true if response.body.to_s.include?("Will be right back")
+      return true if response.body.to_s.include?("<html>")
+      false
+    end
+
+    def circuit_breaker_status
+      {
+        state: @@circuit_breaker_state,
+        failure_count: @@failure_count,
+        last_failure_time: @@last_failure_time,
+        timeout: @@circuit_breaker_timeout,
+        threshold: @@circuit_breaker_threshold
+      }
+    end
+
+    # For /v7/finance/download, scrape crumb from quote page
+    def get_crumb_scrape_quote_page(symbol)
+      return nil if symbol.nil?
+      url = "https://finance.yahoo.com/quote/#{symbol}"
+      response = ::HTTParty.get(url, headers: @@user_agent_headers)
+      # Look for root.App.main = { ... };
+      m = response.body.match(/root\.App\.main\s*=\s*(\{.*?\});/m)
+      return nil unless m
+      json_blob = m[1]
+      begin
+        data = JSON.parse(json_blob)
+        crumb = data.dig('context', 'dispatcher', 'stores', 'CrumbStore', 'crumb')
+        # warn "[yf_as_dataframe] Scraped crumb from quote page: #{crumb.inspect}"
+        return crumb
+      rescue => e
+        # warn "[yf_as_dataframe] Failed to parse crumb from quote page: #{e.message}"
+        return nil
+      end
     end
   end
 end

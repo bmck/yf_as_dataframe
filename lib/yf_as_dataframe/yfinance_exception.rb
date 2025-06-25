@@ -1,3 +1,5 @@
+require 'logger'
+
 class YfAsDataframe
   class YfinanceException < StandardError
     attr_reader :msg
@@ -9,7 +11,7 @@ class YfAsDataframe
   class YFNotImplementedError < NotImplementedError
     def initialize(str)
       @msg = "Have not implemented fetching \"#{str}\" from Yahoo API"
-      Rails.logger.warn { @msg }
+      # Logger.new(STDOUT).warn { @msg }
     end
   end
 end

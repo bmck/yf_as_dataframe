@@ -1,20 +1,24 @@
 require 'open3'
 require 'json'
 require 'ostruct'
+require 'timeout'
 
-module YfAsDataframe
+class YfAsDataframe
   module CurlImpersonateIntegration
     # Configuration
-    @@curl_impersonate_enabled = true
-    @@curl_impersonate_fallback = true
-    @@curl_impersonate_timeout = 30
-    @@curl_impersonate_retries = 2
-    @@curl_impersonate_retry_delay = 1
+    @curl_impersonate_enabled = true
+    @curl_impersonate_fallback = true
+    @curl_impersonate_timeout = 30  # Increased from 5 to 30 seconds
+    @curl_impersonate_connect_timeout = 10  # New: connection timeout
+    @curl_impersonate_retries = 2
+    @curl_impersonate_retry_delay = 1
+    @curl_impersonate_process_timeout = 60  # New: process timeout protection
 
     class << self
       attr_accessor :curl_impersonate_enabled, :curl_impersonate_fallback, 
-                   :curl_impersonate_timeout, :curl_impersonate_retries, 
-                   :curl_impersonate_retry_delay
+                   :curl_impersonate_timeout, :curl_impersonate_connect_timeout,
+                   :curl_impersonate_retries, :curl_impersonate_retry_delay,
+                   :curl_impersonate_process_timeout
     end
 
     # Get the curl-impersonate executable directory from environment variable or default
@@ -50,43 +54,76 @@ module YfAsDataframe
       available.sample
     end
 
-    # Make a curl-impersonate request
-    def self.make_request(url, headers: {}, params: {}, timeout: nil)
+    # Make a curl-impersonate request with improved timeout handling
+    def self.make_request(url, headers: {}, params: {}, timeout: nil, retries: nil)
       executable_info = get_random_executable
       return nil unless executable_info
 
-      timeout ||= @@curl_impersonate_timeout
+      timeout ||= @curl_impersonate_timeout
+      retries ||= @curl_impersonate_retries
 
-      # Build command
-      cmd = [executable_info[:path], "--max-time", timeout.to_s]
-      
-      # Add headers
-      headers.each do |key, value|
-        cmd.concat(["-H", "#{key}: #{value}"])
-      end
-
-      # Add query parameters
+      cmd = [
+        executable_info[:path],
+        "--max-time", timeout.to_s,
+        "--connect-timeout", @curl_impersonate_connect_timeout.to_s,
+        "--retry", retries.to_s,
+        "--retry-delay", @curl_impersonate_retry_delay.to_s,
+        "--retry-max-time", (timeout * 2).to_s,
+        "--fail",
+        "--silent",
+        "--show-error"
+      ]
+      headers.each { |key, value| cmd.concat(["-H", "#{key}: #{value}"]) }
       unless params.empty?
         query_string = params.map { |k, v| "#{k}=#{v}" }.join('&')
         separator = url.include?('?') ? '&' : '?'
         url = "#{url}#{separator}#{query_string}"
       end
-
-      # Add URL
       cmd << url
 
-      # Execute
-      stdout, stderr, status = Open3.capture3(*cmd)
-      
+      puts "DEBUG: curl-impersonate command: #{cmd.join(' ')}"
+      puts "DEBUG: curl-impersonate timeout: #{timeout} seconds"
+
+      begin
+        stdout_str = ''
+        stderr_str = ''
+        status = nil
+        Open3.popen3(*cmd) do |stdin, stdout, stderr, wait_thr|
+          stdin.close
+          pid = wait_thr.pid
+          done = false
+          monitor = Thread.new do
+            sleep(timeout + 10)
+            unless done
+              puts "DEBUG: Killing curl-impersonate PID \\#{pid} after timeout"
+              Process.kill('TERM', pid) rescue nil
+              sleep(1)
+              Process.kill('KILL', pid) rescue nil if wait_thr.alive?
+            end
+          end
+          stdout_str = stdout.read
+          stderr_str = stderr.read
+          status = wait_thr.value
+          done = true
+          monitor.kill
+        end
+        puts "DEBUG: curl-impersonate stdout: #{stdout_str[0..200]}..." if stdout_str && !stdout_str.empty?
+        puts "DEBUG: curl-impersonate stderr: #{stderr_str}" if stderr_str && !stderr_str.empty?
+      puts "DEBUG: curl-impersonate status: #{status.exitstatus}"
       if status.success?
-        # Create a response object similar to HTTParty
         response = OpenStruct.new
-        response.body = stdout
+          response.body = stdout_str
         response.code = 200
         response.define_singleton_method(:success?) { true }
-        response.parsed_response = parse_json_if_possible(stdout)
+          response.parsed_response = parse_json_if_possible(stdout_str)
         response
       else
+          error_message = "curl failed with code \\#{status.exitstatus}: \\#{stderr_str}"
+          puts "DEBUG: curl-impersonate failed with error: \\#{error_message}"
+          nil
+        end
+      rescue => e
+        puts "DEBUG: curl-impersonate exception: \\#{e.message}"
         nil
       end
     end

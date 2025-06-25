@@ -1,4 +1,5 @@
 require 'polars-df'
+require 'logger'
 
 class YfAsDataframe
   module Financials
@@ -111,7 +112,7 @@ class YfAsDataframe
       ts_url_base = "https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/#{symbol}?symbol=#{symbol}"
       url = ts_url_base + "&type=" + ts_keys.map { |k| "#{timescale}#{k}" }.join(",")
       start_dt = DateTime.new(2016, 12, 31)
-      end_dt = DateTime.now.tomorrow.midnight
+      end_dt = Time.now.tomorrow.midnight
       url += "&period1=#{start_dt.to_i}&period2=#{end_dt.to_i}"
 
       json_str = get(url).parsed_response
@@ -160,7 +161,7 @@ class YfAsDataframe
         statement = _create_financials_table(nam, timescale)
         return statement unless statement.nil?
       rescue Yfin::YfinDataException => e
-        Rails.logger.error {"#{@symbol}: Failed to create #{nam} financials table for reason: #{e}"}
+        Logger.new(STDOUT).error {"#{@symbol}: Failed to create #{nam} financials table for reason: #{e}"}
       end
       Polars::DataFrame.new()
     end

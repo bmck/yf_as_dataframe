@@ -1,10 +1,10 @@
 require 'polars'
 require 'polars-df'
+require 'logger'
 
 class YfAsDataframe
   module PriceHistory
     extend ActiveSupport::Concern
-    include ActionView::Helpers::NumberHelper
 
     PRICE_COLNAMES = ['Open', 'High', 'Low', 'Close', 'Adj Close']
     BASE_URL = 'https://query2.finance.yahoo.com'
@@ -35,10 +35,10 @@ class YfAsDataframe
     def history(period: "1mo", interval: "1d", start: nil, fin: nil, prepost: false,
                 actions: true, auto_adjust: true, back_adjust: false, repair: false, keepna: false,
                 rounding: false, raise_errors: false, returns: false)
-      logger = Rails.logger # Yfin.get_yf_logger
+      logger = Logger.new(STDOUT) # Replace Rails.logger with standard Ruby logger
       start_user = start
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} here" }
-      end_user = fin || DateTime.now
+      end_user = fin || Time.now
 
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} here" }
       params = _preprocess_params(start, fin, interval, period, prepost, raise_errors)
@@ -572,7 +572,7 @@ class YfAsDataframe
           if raise_errors
             raise Exception.new("#{@ticker}: #{err_msg}")
           else
-            Rails.logger.error("#{@ticker}: #{err_msg}")
+            Logger.new(STDOUT).error("#{@ticker}: #{err_msg}")
           end
           return YfAsDataframe::Utils.empty_df
         end
@@ -585,7 +585,7 @@ class YfAsDataframe
           if interval == "1m"
             start = (fin - 1.week).to_i
           else
-            max_start_datetime = (DateTime.now - (99.years)).to_i
+            max_start_datetime = (Time.now - (99.years)).to_i
             start = max_start_datetime.to_i
           end
         else
@@ -598,7 +598,7 @@ class YfAsDataframe
       else
         period = period.downcase
         # params = { "range" => period }
-        fin = DateTime.now.to_i
+        fin = Time.now.to_i
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} here fin= #{fin}, period = #{period}" } 
         start = (fin - YfAsDataframe::Utils.interval_to_timedelta(period)).to_i
         params = { "period1" => start, "period2" => fin }
@@ -617,31 +617,40 @@ class YfAsDataframe
     def _get_data(ticker, params, fin, raise_errors)
       url = "https://query2.finance.yahoo.com/v8/finance/chart/#{CGI.escape ticker}"
       # url = "https://query1.finance.yahoo.com/v7/finance/download/#{ticker}" ... Deprecated
-      # Rails.logger.info { "#{__FILE__}:#{__LINE__} url = #{url}" }
+      logger = Logger.new(STDOUT)
+      logger.info { "#{__FILE__}:#{__LINE__} url = #{url}" }
       data = nil
       # get_fn = @data.method(:get)
 
       if fin
         end_dt = DateTime.strptime(fin.to_s, '%s') #.new_offset(0)
-        dt_now = DateTime.now #.new_offset(0)
+        dt_now = Time.now #.new_offset(0)
         data_delay = Rational(30, 24 * 60)
 
         # get_fn = @data.method(:cache_get) if end_dt + data_delay <= dt_now
       end
 
       begin
-        # Rails.logger.info { "#{__FILE__}:#{__LINE__} url = #{url}, params = #{params.inspect}" }
+        logger.info { "#{__FILE__}:#{__LINE__} url = #{url}, params = #{params.inspect}" }
         data = get(url, nil, params).parsed_response
-        # Rails.logger.info { "#{__FILE__}:#{__LINE__} data = #{data.inspect}" }
+        logger.info { "#{__FILE__}:#{__LINE__} data = #{data.inspect}" }
+
+        # Validate response before processing
+        unless validate_yahoo_response(data)
+          raise RuntimeError.new("Invalid response from Yahoo Finance: #{data.inspect}")
+        end
 
         raise RuntimeError.new(
           "*** YAHOO! FINANCE IS CURRENTLY DOWN! ***\n" +
           "Our engineers are working quickly to resolve the issue. Thank you for your patience."
-        ) if data.text.include?("Will be right back") || data.nil?
+        ) if (data.is_a?(String) && data.include?("Will be right back")) || data.nil?
 
-        data = HashWithIndifferentAccess.new(data)
-        # Rails.logger.info { "#{__FILE__}:#{__LINE__} data = #{data.inspect}" }
-      rescue Exception
+        # Use standard Ruby Hash
+        data = data.is_a?(Hash) ? data : JSON.parse(data.to_s) rescue data
+        logger.info { "#{__FILE__}:#{__LINE__} data = #{data.inspect}" }
+      rescue Exception => e
+        logger.error { "#{__FILE__}:#{__LINE__} Exception caught: #{e.message}" }
+        logger.error { "#{__FILE__}:#{__LINE__} Exception backtrace: #{e.backtrace.first(5).join("\n")}" }
         raise if raise_errors
       end
 
@@ -710,7 +719,7 @@ class YfAsDataframe
         # startDt = quotes.index[0].floor('D')
         startDt = quotes['Timestamps'].to_a.map(&:to_date).min
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} startDt = #{startDt.inspect}" }
-        endDt = fin.present? ? fin.to_date : Time.at(DateTime.now.tomorrow).to_i
+        endDt = !fin.nil? && !(fin.respond_to?(:empty?) && fin.empty?) ? fin.to_date : Time.at((Time.now + 1.day).to_i).to_i
 
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} @history[events][dividends] = #{@history['events']["dividends"].inspect}" }
         # divi = {}
@@ -2019,7 +2028,7 @@ class YfAsDataframe
     end
 
     def _exchange_open_now
-      t = DateTime.now
+      t = Time.now
       _get_exchange_metadata
 
       # if self._today_open is nil and self._today_close.nil?
@@ -2040,6 +2049,27 @@ class YfAsDataframe
 
       # print("_exchange_open_now returning", r)
       # return r
+    end
+
+    private
+
+    def validate_yahoo_response(response)
+      return false if response.nil?
+      return false if response.is_a?(String) && response.include?("Too Many Requests")
+      return false if response.is_a?(String) && response.include?("Will be right back")
+      return false if response.is_a?(String) && response.include?("<html>")
+      return false if response.is_a?(String) && response.strip.empty?
+      
+      # If it's a Hash, validate it has the expected structure
+      if response.is_a?(Hash)
+        return false unless response.key?("chart")
+        return false unless response["chart"].is_a?(Hash)
+        return false unless response["chart"].key?("result")
+        return false unless response["chart"]["result"].is_a?(Array)
+        return false if response["chart"]["result"].empty?
+      end
+      
+      true
     end
   end
 end

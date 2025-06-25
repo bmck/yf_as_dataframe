@@ -1,4 +1,5 @@
 require 'polars-df'
+require 'logger'
 
 class YfAsDataframe
   class Multi
@@ -59,7 +60,7 @@ class YfAsDataframe
       #     session: None or Session
       #         Optional. Pass your own session object to be used for all requests
       # """
-      logger = Rails.logger
+      logger = Logger.new(STDOUT)
 
       if show_errors
         YfAsDataframe::Utils.print_once("yfinance: download(show_errors=#{show_errors}) argument is deprecated and will be removed in future version. Do this instead: logging.getLogger('yfinance').setLevel(logging.ERROR)")
@@ -118,7 +119,7 @@ class YfAsDataframe
       @shared::_PROGRESS_BAR.completed if progress
 
       unless @shared::_ERRORS.empty?
-        logger.error("\n#{@shared::_ERRORS.length} Failed download#{@shared::_ERRORS.length > 1 ? 's' : ''}:")
+        # logger.error("\n#{@shared::_ERRORS.length} Failed download#{@shared::_ERRORS.length > 1 ? 's' : ''}:")
 
         errors = {}
         @shared::_ERRORS.each do |ticker, err|
@@ -126,9 +127,9 @@ class YfAsDataframe
           errors[err] ||= []
           errors[err] << ticker
         end
-        errors.each do |err, tickers|
-          logger.error("#{tickers.join(', ')}: #{err}")
-        end
+        # errors.each do |err, tickers|
+        #   logger.error("#{tickers.join(', ')}: #{err}")
+        # end
 
         tbs = {}
         @shared::_TRACEBACKS.each do |ticker, tb|
@@ -136,9 +137,9 @@ class YfAsDataframe
           tbs[tb] ||= []
           tbs[tb] << ticker
         end
-        tbs.each do |tb, tickers|
-          logger.debug("#{tickers.join(', ')}: #{tb}")
-        end
+        # tbs.each do |tb, tickers|
+        #   logger.debug("#{tickers.join(', ')}: #{tb}")
+        # end
       end
 
       if ignore_tz

@@ -1,4 +1,5 @@
 require 'httparty'
+require 'logger'
 
 class YfAsDataframe
   module Quote
@@ -129,7 +130,7 @@ class YfAsDataframe
         result = get_raw_json(QUOTE_SUMMARY_URL + "/#{symbol}", user_agent_headers=user_agent_headers, params=params_dict)
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} result = #{result.inspect}" }
       rescue Exception => e
-        Rails.logger.error("ERROR: #{e.message}")
+        Logger.new(STDOUT).error("ERROR: #{e.message}")
         return nil
       end
       return result
@@ -192,10 +193,10 @@ class YfAsDataframe
         keys.each { |k| url += "&type=" + k }
 
         # Request 6 months of data
-        start = (DateTime.now.utc.midnight - 6.months).to_i #datetime.timedelta(days=365 // 2)
+        start = (Time.now.utc.midnight - 6.months).to_i #datetime.timedelta(days=365 // 2)
         # start = int(start.timestamp())
 
-        ending = DateTime.now.utc.tomorrow.midnight.to_i
+        ending = Time.now.utc.tomorrow.midnight.to_i
         # ending = int(ending.timestamp())
         url += "&period1=#{start}&period2=#{ending}"
 
