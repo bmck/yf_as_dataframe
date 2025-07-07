@@ -1,4 +1,5 @@
 require 'logger'
+require 'open-uri'
 
 class YfAsDataframe
   module Holders

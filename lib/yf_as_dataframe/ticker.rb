@@ -54,21 +54,21 @@ class YfAsDataframe
       if start
         start_ts = YfAsDataframe::Utils.parse_user_dt(start, tz)
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} start_ts = #{start_ts}" }
-        start = Time.at(start_ts).in_time_zone(tz)
+        start = Time.at(start_ts)
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} start = #{start.inspect}, fin = #{fin.inspect}" } 
       end
       if fin
         end_ts = YfAsDataframe::Utils.parse_user_dt(fin, tz)
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} end_ts = #{end_ts}" }
-        fin = Time.at(end_ts).in_time_zone(tz)
+        fin = Time.at(end_ts)
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} start = #{start.inspect}, fin = #{fin.inspect}" } 
       end
 
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} start = #{start.inspect}, fin = #{fin.inspect}" } 
 
-      dt_now = Time.now.in_time_zone(tz)
+      dt_now = Time.now
       fin ||= dt_now
-      start ||= (fin - 548.days).midnight
+      start ||= Time.new(fin.year, fin.month, fin.day) - 548*24*60*60
 
       if start >= fin
         logger.error("Start date (#{start}) must be before end (#{fin})")
@@ -76,7 +76,7 @@ class YfAsDataframe
       end
 
       ts_url_base = "https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/#{@ticker}?symbol=#{@ticker}"
-      shares_url = "#{ts_url_base}&period1=#{start.to_i}&period2=#{fin.tomorrow.midnight.to_i}"
+      shares_url = "#{ts_url_base}&period1=#{Time.new(start.year, start.month, start.day).to_i}&period2=#{Time.new((fin + 86400).year, (fin + 86400).month, (fin + 86400).day).to_i}"
 
       begin
         json_data = get(shares_url).parsed_response
@@ -95,7 +95,7 @@ class YfAsDataframe
 
       return nil if !shares_data[0].key?("shares_out")
 
-      timestamps = shares_data[0]["timestamp"].map{|t| Time.at(t).to_datetime }
+      timestamps = shares_data[0]["timestamp"].map{|t| Time.at(t) }
 
       df = Polars::DataFrame.new(
         {

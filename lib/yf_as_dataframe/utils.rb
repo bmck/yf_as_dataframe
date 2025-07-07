@@ -247,13 +247,17 @@ class YfAsDataframe
 
     def self.parse_user_dt(dt, exchange_tz)
       if dt.is_a?(Integer)
-        Time.at(dt)
+        return Time.at(dt)
       elsif dt.is_a?(String)
-        dt = DateTime.strptime(dt.to_s, '%Y-%m-%d') 
+        dt = DateTime.strptime(dt.to_s, '%Y-%m-%d')
       elsif dt.is_a?(Date)
-        dt = dt.to_datetime 
-      elsif dt.is_a?(DateTime) && dt.zone.nil?
-        dt = dt.in_time_zone(exchange_tz)
+        dt = dt.to_datetime
+      end
+      # If it's a DateTime, convert to Time
+      if dt.is_a?(DateTime)
+        # If zone is nil, try to set it, else just convert
+        dt = dt.in_time_zone(exchange_tz) if dt.zone.nil? && dt.respond_to?(:in_time_zone)
+        dt = dt.to_time
       end
       dt.to_i
     end

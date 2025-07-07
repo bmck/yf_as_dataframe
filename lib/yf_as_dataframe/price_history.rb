@@ -719,7 +719,7 @@ class YfAsDataframe
         # startDt = quotes.index[0].floor('D')
         startDt = quotes['Timestamps'].to_a.map(&:to_date).min
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} startDt = #{startDt.inspect}" }
-        endDt = !fin.nil? && !(fin.respond_to?(:empty?) && fin.empty?) ? fin.to_date : Time.at((Time.now + 1.day).to_i).to_i
+        endDt = !fin.nil? && !(fin.respond_to?(:empty?) && fin.empty?) ? fin.to_date : (Time.now + 86400).to_date
 
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} @history[events][dividends] = #{@history['events']["dividends"].inspect}" }
         # divi = {}
@@ -731,32 +731,32 @@ class YfAsDataframe
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} ts = #{ts.inspect}" }
         @history['events']["dividends"].select{|k,v| 
           Time.at(k.to_i).utc.to_date >= startDt && Time.at(k.to_i).utc.to_date <= endDt }.each{|k,v| 
-            d[ts.index(Time.at(k.to_i).utc)] = v['amount'].to_f} unless @history.try(:[],'events').try(:[],"dividends").nil?
+            d[ts.index(Time.at(k.to_i).utc)] = v['amount'].to_f} unless @history.dig('events', 'dividends').nil?
         df['Dividends'] = Polars::Series.new(d)
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} df = #{df.inspect}" }
 
         # caga = {}
         # @history['events']["capital gains"].select{|k,v| 
         #   Time.at(k.to_i).utc.to_date >= startDt  && Time.at(k.to_i).utc.to_date <= endDt }.each{|k,v| 
-        #     caga['date'] = v['amount']} unless @history.try(:[],'events').try(:[],"capital gains").nil?
+        #     caga['date'] = v['amount']} unless @history.dig('events', 'capital gains').nil?
         # capital_gains = capital_gains.loc[startDt:] if capital_gains.shape.first > 0
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} caga = #{caga.inspect}" }
         d = [0.0] * df.length
         @history['events']["capital gains"].select{|k,v| 
           Time.at(k.to_i).utc.to_date >= startDt  && Time.at(k.to_i).utc.to_date <= endDt }.each{|k,v| 
-            d[ts.index(Time.at(k.to_i).utc)] = v['amount'].to_f} unless @history.try(:[],'events').try(:[],"capital gains").nil?
+            d[ts.index(Time.at(k.to_i).utc)] = v['amount'].to_f} unless @history.dig('events', 'capital gains').nil?
         df['Capital Gains'] = Polars::Series.new(d)
 
         # splits = splits.loc[startDt:] if splits.shape[0] > 0
         # stspl = {}
         # @history['events']['stock splits'].select{|k,v| 
         #   Time.at(k.to_i).utc.to_date >= startDt  && Time.at(k.to_i).utc.to_date <= endDt }.each{|k,v| 
-        #     stspl['date'] = v['numerator'].to_f/v['denominator'].to_f} unless @history.try(:[],'events').try(:[],"stock splits").nil?
+        #     stspl['date'] = v['numerator'].to_f/v['denominator'].to_f} unless @history.dig('events', 'capital gains').nil?
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} stspl = #{stspl.inspect}" }
         d = [0.0] * df.length
         @history['events']["capital gains"].select{|k,v| 
           Time.at(k.to_i).utc.to_date >= startDt  && Time.at(k.to_i).utc.to_date <= endDt }.each{|k,v| 
-            d[ts.index(Time.at(k.to_i).utc)] = v['numerator'].to_f/v['denominator'].to_f} unless @history.try(:[],'events').try(:[],"capital gains").nil?
+            d[ts.index(Time.at(k.to_i).utc)] = v['numerator'].to_f/v['denominator'].to_f} unless @history.dig('events', 'capital gains').nil?
         df['Stock Splits'] = Polars::Series.new(d)
       end
 
