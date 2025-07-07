@@ -62,19 +62,20 @@ class YfAsDataframe
       # """
       logger = Logger.new(STDOUT)
 
+      # YfAsDataframe::Utils.print_once("yfinance: download(show_errors=#{show_errors}) argument is deprecated and will be removed in future version. Do this instead: logging.getLogger('yfinance').setLevel(logging.ERROR)")
+
       if show_errors
-        YfAsDataframe::Utils.print_once("yfinance: download(show_errors=#{show_errors}) argument is deprecated and will be removed in future version. Do this instead: logging.getLogger('yfinance').setLevel(logging.ERROR)")
-        logger.level = Logger::ERROR
+        # YfAsDataframe::Utils.print_once("yfinance: download(show_errors=#{show_errors}) argument is deprecated and will be removed in future version. Do this instead to suppress error messages: logging.getLogger('yfinance').setLevel(logging.CRITICAL)")
+        # logger.level = Logger::CRITICAL
       else
-        YfAsDataframe::Utils.print_once("yfinance: download(show_errors=#{show_errors}) argument is deprecated and will be removed in future version. Do this instead to suppress error messages: logging.getLogger('yfinance').setLevel(logging.CRITICAL)")
-        logger.level = Logger::CRITICAL
+        # logger.level = Logger::CRITICAL
       end
 
-      if logger.debug?
-        threads = false if threads
-        logger.debug('Disabling multithreading because DEBUG logging enabled')
-        progress = false if progress
-      end
+      # if logger.debug?
+      #   threads = false if threads
+      #   logger.debug('Disabling multithreading because DEBUG logging enabled')
+      #   progress = false if progress
+      # end
 
       ignore_tz = interval[1..-1].match?(/[mh]/) ? false : true if ignore_tz.nil?
 

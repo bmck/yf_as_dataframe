@@ -35,7 +35,7 @@ class YfAsDataframe
     def history(period: "1mo", interval: "1d", start: nil, fin: nil, prepost: false,
                 actions: true, auto_adjust: true, back_adjust: false, repair: false, keepna: false,
                 rounding: false, raise_errors: false, returns: false)
-      logger = Logger.new(STDOUT) # Replace Rails.logger with standard Ruby logger
+      # logger = Logger.new(STDOUT) # Replace Rails.logger with standard Ruby logger
       start_user = start
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} here" }
       end_user = fin || Time.now
@@ -75,7 +75,7 @@ class YfAsDataframe
         if raise_errors
           raise Exception.new("#{ticker}: #{err_msg}")
         else
-          logger.error("#{ticker}: #{err_msg}")
+          # logger.error("#{ticker}: #{err_msg}")
         end
         if @reconstruct_start_interval && @reconstruct_start_interval == interval
           @reconstruct_start_interval = nil
@@ -572,7 +572,7 @@ class YfAsDataframe
           if raise_errors
             raise Exception.new("#{@ticker}: #{err_msg}")
           else
-            Logger.new(STDOUT).error("#{@ticker}: #{err_msg}")
+            # Logger.new(STDOUT).error("#{@ticker}: #{err_msg}")
           end
           return YfAsDataframe::Utils.empty_df
         end
@@ -617,8 +617,8 @@ class YfAsDataframe
     def _get_data(ticker, params, fin, raise_errors)
       url = "https://query2.finance.yahoo.com/v8/finance/chart/#{CGI.escape ticker}"
       # url = "https://query1.finance.yahoo.com/v7/finance/download/#{ticker}" ... Deprecated
-      logger = Logger.new(STDOUT)
-      logger.info { "#{__FILE__}:#{__LINE__} url = #{url}" }
+      # logger = Logger.new(STDOUT)
+              # logger.info { "#{__FILE__}:#{__LINE__} url = #{url}" }
       data = nil
       # get_fn = @data.method(:get)
 
@@ -631,9 +631,9 @@ class YfAsDataframe
       end
 
       begin
-        logger.info { "#{__FILE__}:#{__LINE__} url = #{url}, params = #{params.inspect}" }
+        # logger.info { "#{__FILE__}:#{__LINE__} url = #{url}, params = #{params.inspect}" }
         data = get(url, nil, params).parsed_response
-        logger.info { "#{__FILE__}:#{__LINE__} data = #{data.inspect}" }
+        # logger.info { "#{__FILE__}:#{__LINE__} data = #{data.inspect}" }
 
         # Validate response before processing
         unless validate_yahoo_response(data)
@@ -647,10 +647,10 @@ class YfAsDataframe
 
         # Use standard Ruby Hash
         data = data.is_a?(Hash) ? data : JSON.parse(data.to_s) rescue data
-        logger.info { "#{__FILE__}:#{__LINE__} data = #{data.inspect}" }
+        # logger.info { "#{__FILE__}:#{__LINE__} data = #{data.inspect}" }
       rescue Exception => e
-        logger.error { "#{__FILE__}:#{__LINE__} Exception caught: #{e.message}" }
-        logger.error { "#{__FILE__}:#{__LINE__} Exception backtrace: #{e.backtrace.first(5).join("\n")}" }
+        # logger.error { "#{__FILE__}:#{__LINE__} Exception caught: #{e.message}" }
+        # logger.error { "#{__FILE__}:#{__LINE__} Exception backtrace: #{e.backtrace.first(5).join("\n")}" }
         raise if raise_errors
       end
 
@@ -1085,7 +1085,7 @@ class YfAsDataframe
       # quotes.sort_index!(inplace: true)
 
       if interval.downcase == "30m"
-        logger.debug("#{ticker}: resampling 30m OHLC from 15m")
+        # logger.debug("#{ticker}: resampling 30m OHLC from 15m")
         quotes2 = quotes.resample('30T')
         quotes = Polars::DataFrame.new(index: quotes2.last.index, data: {
                                          'Open' => quotes2['Open'].first,

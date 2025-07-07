@@ -81,8 +81,8 @@ class YfAsDataframe
       end
       cmd << url
 
-      puts "DEBUG: curl-impersonate command: #{cmd.join(' ')}"
-      puts "DEBUG: curl-impersonate timeout: #{timeout} seconds"
+      # puts "DEBUG: curl-impersonate command: #{cmd.join(' ')}"
+      # puts "DEBUG: curl-impersonate timeout: #{timeout} seconds"
 
       begin
         stdout_str = ''
@@ -95,7 +95,7 @@ class YfAsDataframe
           monitor = Thread.new do
             sleep(timeout + 10)
             unless done
-              puts "DEBUG: Killing curl-impersonate PID \\#{pid} after timeout"
+              # puts "DEBUG: Killing curl-impersonate PID \\#{pid} after timeout"
               Process.kill('TERM', pid) rescue nil
               sleep(1)
               Process.kill('KILL', pid) rescue nil if wait_thr.alive?
@@ -107,23 +107,23 @@ class YfAsDataframe
           done = true
           monitor.kill
         end
-        puts "DEBUG: curl-impersonate stdout: #{stdout_str[0..200]}..." if stdout_str && !stdout_str.empty?
-        puts "DEBUG: curl-impersonate stderr: #{stderr_str}" if stderr_str && !stderr_str.empty?
-      puts "DEBUG: curl-impersonate status: #{status.exitstatus}"
-      if status.success?
-        response = OpenStruct.new
-          response.body = stdout_str
-        response.code = 200
-        response.define_singleton_method(:success?) { true }
-          response.parsed_response = parse_json_if_possible(stdout_str)
-        response
-      else
+        # puts "DEBUG: curl-impersonate stdout: #{stdout_str[0..200]}..." if stdout_str && !stdout_str.empty?
+        # puts "DEBUG: curl-impersonate stderr: #{stderr_str}" if stderr_str && !stderr_str.empty?
+        # puts "DEBUG: curl-impersonate status: #{status.exitstatus}"
+        if status.success?
+          response = OpenStruct.new
+            response.body = stdout_str
+          response.code = 200
+          response.define_singleton_method(:success?) { true }
+            response.parsed_response = parse_json_if_possible(stdout_str)
+          response
+        else
+          # puts "DEBUG: curl-impersonate failed with error: \\#{error_message}"
           error_message = "curl failed with code \\#{status.exitstatus}: \\#{stderr_str}"
-          puts "DEBUG: curl-impersonate failed with error: \\#{error_message}"
           nil
         end
       rescue => e
-        puts "DEBUG: curl-impersonate exception: \\#{e.message}"
+        # puts "DEBUG: curl-impersonate exception: \\#{e.message}"
         nil
       end
     end

@@ -47,7 +47,7 @@ class YfAsDataframe
     def symbol; @ticker; end
 
     def shares_full(start: nil, fin: nil)
-      logger = Logger.new(STDOUT)
+      # logger = Logger.new(STDOUT)
 
       # Rails.logger.info { "#{__FILE__}:#{__LINE__} start = #{start.inspect}, fin = #{fin.inspect}" } 
 
@@ -71,7 +71,7 @@ class YfAsDataframe
       start ||= Time.new(fin.year, fin.month, fin.day) - 548*24*60*60
 
       if start >= fin
-        logger.error("Start date (#{start}) must be before end (#{fin})")
+        # logger.error("Start date (#{start}) must be before end (#{fin})")
         return nil
       end
 
@@ -81,13 +81,13 @@ class YfAsDataframe
       begin
         json_data = get(shares_url).parsed_response
       rescue #_json.JSONDecodeError, requests.exceptions.RequestException
-        logger.error("#{@ticker}: Yahoo web request for share count failed")
+        # logger.error("#{@ticker}: Yahoo web request for share count failed")
         return nil
       end
 
       fail = json_data["finance"]["error"]["code"] == "Bad Request" rescue false
       if fail
-        logger.error("#{@ticker}: Yahoo web request for share count failed")
+        # logger.error("#{@ticker}: Yahoo web request for share count failed")
         return nil
       end
 
@@ -153,7 +153,7 @@ class YfAsDataframe
       # """
       return @earnings_dates[limit] if @earnings_dates && @earnings_dates[limit]
 
-      logger = Logger.new(STDOUT)
+      # logger = Logger.new(STDOUT)
 
       page_size = [limit, 100].min  # YF caps at 100, don't go higher
       page_offset = 0

@@ -12,12 +12,12 @@ class YfAsDataframe
     # Override get method to use curl-impersonate by default
     def get(url, headers=nil, params=nil)
       # Debug output
-      puts "DEBUG: curl_impersonate_enabled = #{CurlImpersonateIntegration.curl_impersonate_enabled}"
-      puts "DEBUG: curl_impersonate_fallback = #{CurlImpersonateIntegration.curl_impersonate_fallback}"
+      # puts "DEBUG: curl_impersonate_enabled = #{CurlImpersonateIntegration.curl_impersonate_enabled}"
+      # puts "DEBUG: curl_impersonate_fallback = #{CurlImpersonateIntegration.curl_impersonate_fallback}"
       
       # Try curl-impersonate first if enabled
       if CurlImpersonateIntegration.curl_impersonate_enabled
-        puts "DEBUG: Trying curl-impersonate..."
+        # puts "DEBUG: Trying curl-impersonate..."
         begin
           # Prepare headers and params as in original method
           headers ||= {}
@@ -55,28 +55,27 @@ class YfAsDataframe
             retries: CurlImpersonateIntegration.curl_impersonate_retries
           )
 
-          if response && response.success?
-            puts "DEBUG: curl-impersonate succeeded"
+          if response && !response.empty?
+            # puts "DEBUG: curl-impersonate succeeded"
             return response
           else
-            puts "DEBUG: curl-impersonate returned nil or failed"
+            # puts "DEBUG: curl-impersonate returned nil or failed"
           end
         rescue => e
-          # Log error but continue to fallback
-          puts "DEBUG: curl-impersonate exception: #{e.message}"
+          # puts "DEBUG: curl-impersonate exception: #{e.message}"
           # warn "curl-impersonate request failed: #{e.message}" if $VERBOSE
         end
       else
-        puts "DEBUG: curl-impersonate is disabled, skipping to fallback"
+        # puts "DEBUG: curl-impersonate is disabled, skipping to fallback"
       end
 
       # Fallback to original HTTParty method
       if CurlImpersonateIntegration.curl_impersonate_fallback
-        puts "DEBUG: Using HTTParty fallback"
-        get_original(url, headers, params)
+        # puts "DEBUG: Using HTTParty fallback"
+        return HTTParty.get(url, headers: headers).body
       else
-        puts "DEBUG: Fallback is disabled, but forcing fallback anyway"
-        get_original(url, headers, params)
+        # puts "DEBUG: Fallback is disabled, but forcing fallback anyway"
+        return HTTParty.get(url, headers: headers).body
       end
     end
 

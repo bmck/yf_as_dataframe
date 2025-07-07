@@ -143,7 +143,7 @@ class YfAsDataframe
 
       df = Polars::DataFrame.new(df)
       timestamps.map{|ts| Time.at(ts).utc.to_date.to_s }.each do |t|
-        puts t
+        # puts t
         df.replace(t, Polars::Series.new(df[t].cast(Polars::String)))
       end
       df
@@ -161,7 +161,7 @@ class YfAsDataframe
         statement = _create_financials_table(nam, timescale)
         return statement unless statement.nil?
       rescue Yfin::YfinDataException => e
-        Logger.new(STDOUT).error {"#{@symbol}: Failed to create #{nam} financials table for reason: #{e}"}
+        # Logger.new(STDOUT).error {"#{@symbol}: Failed to create #{nam} financials table for reason: #{e}"}
       end
       Polars::DataFrame.new()
     end

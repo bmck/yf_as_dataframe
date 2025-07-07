@@ -130,7 +130,7 @@ class YfAsDataframe
         result = get_raw_json(QUOTE_SUMMARY_URL + "/#{symbol}", user_agent_headers=user_agent_headers, params=params_dict)
         # Rails.logger.info { "#{__FILE__}:#{__LINE__} result = #{result.inspect}" }
       rescue Exception => e
-        Logger.new(STDOUT).error("ERROR: #{e.message}")
+        # Logger.new(STDOUT).error("ERROR: #{e.message}")
         return nil
       end
       return result

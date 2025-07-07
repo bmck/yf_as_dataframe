@@ -379,7 +379,7 @@ def attributes(obj)
 end
 
 def print_once(msg)
-  puts msg
+  # puts msg
 end
 
 def get_yf_logger
@@ -392,7 +392,7 @@ def setup_debug_formatting
 
   return unless logger.level == Logger::DEBUG
 
-  logger.formatter = MultiLineFormatter.new('%(levelname)-8s %(message)s')
+          # logger.formatter = MultiLineFormatter.new('%(levelname)-8s %(message)s')
 end
 
 def enable_debug_mode
