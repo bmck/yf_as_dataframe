@@ -30,6 +30,11 @@ Yahoo! finance API is intended for personal use only.**
 
 This package provides for pulling data from Yahoo!'s unofficial API, and providing that data using using [Polars](https://github.com/ankane/ruby-polars?tab=readme-ov-file) dataframes in ruby.  Data in those dataframes can then be easily post-processed using technical indicators provided by [Tulip](https://tulipindicators.org/) via [Tulirb's](https://www.rubydoc.info/github/ozone4real/tulirb/main/Tulirb) ruby bindings, and visualized using [Vega](https://github.com/ankane/vega-ruby). 
 
+## Requirements
+
+- **Ruby**: >= 3.3
+- **polars-df**: 0.27.1
+
 ### Quick Start: The Ticker module
 
 The `Ticker` class, which allows you to access ticker data from Yahoo!'s unofficial API:
@@ -384,7 +389,7 @@ The test suite covers:
 - **Technical Indicators**: SMA, EMA, RSI, OBV, and other price technical indicators
 - **Error Handling**: Invalid symbols, network failures, and malformed responses
 
-Tests are designed to run offline using fixtures, avoiding live network requests and ensuring consistent, fast test execution in CI environments.
+Tests are designed to run offline using fixtures, avoiding live network requests and ensuring consistent, fast test execution.
 
 ---
 
