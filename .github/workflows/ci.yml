@@ -18,6 +18,9 @@ jobs:
         with:
           ruby-version: '3.3'
       
+      - name: Add current platform to lockfile
+        run: bundle lock --add-platform x86_64-linux
+      
       - name: Install dependencies
         run: bundle install
       
