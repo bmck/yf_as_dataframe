@@ -395,7 +395,7 @@ class YfAsDataframe
     end
 
     def rsi(df, window: 20)
-      return nil if w == 1
+      return nil if window == 1
       inputs = ['Adj Close'].map{|col| Polars::Series.new(df[col]).to_a}
       output = Tulirb.rsi(inputs, period: window).first
       Polars::Series.new("#{window}-day RSI", [nil]*(df.rows.length - output.length)+output) #)

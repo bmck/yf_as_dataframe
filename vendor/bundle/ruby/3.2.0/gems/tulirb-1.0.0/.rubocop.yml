@@ -1,0 +1,29 @@
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 2.7
+  Exclude:
+    - ext/tulirb/extconf.rb
+    - Gemfile.lock
+    - 'vendor/bundle/**/*'
+Style/StringLiterals:
+  Enabled: true
+  EnforcedStyle: double_quotes
+Style/MethodCallWithArgsParentheses:
+  Enabled: true
+  IgnoreMacros: false
+Style/StringLiteralsInInterpolation:
+  Enabled: true
+  EnforcedStyle: double_quotes
+Style/Documentation:
+  Enabled: false
+Metrics/ModuleLength:
+  Enabled: false
+Metrics/ClassLength:
+  Enabled: false
+Metrics/MethodLength:
+  CountAsOne: ['array', 'heredoc', 'method_call']
+  Max: 30
+  
+
+Layout/LineLength:
+  Max: 120
