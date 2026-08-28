@@ -329,6 +329,65 @@ Or install it yourself as:
 
 ---
 
+## Testing
+
+This gem includes a comprehensive test suite using RSpec. Tests use WebMock and VCR to mock HTTP requests, ensuring tests run without hitting the live Yahoo Finance API.
+
+### Running Tests Locally
+
+To run the full test suite:
+
+```bash
+bundle install
+bundle exec rspec
+```
+
+To run tests with documentation format:
+
+```bash
+bundle exec rspec --format documentation
+```
+
+To run specific test files:
+
+```bash
+bundle exec rspec spec/yf_as_dataframe/ticker_spec.rb
+bundle exec rspec spec/yf_as_dataframe/yf_connection_spec.rb
+```
+
+### Running Rake Tasks
+
+The default rake task runs both tests and RuboCop:
+
+```bash
+bundle exec rake
+```
+
+Run only tests:
+
+```bash
+bundle exec rake spec
+```
+
+Run only RuboCop:
+
+```bash
+bundle exec rake rubocop
+```
+
+### Test Coverage
+
+The test suite covers:
+
+- **Ticker#history**: Historical price data retrieval with mocked HTTP responses
+- **YfConnection**: User-Agent headers, cookie management, circuit breaker, and request throttling
+- **Technical Indicators**: SMA, EMA, RSI, OBV, and other price technical indicators
+- **Error Handling**: Invalid symbols, network failures, and malformed responses
+
+Tests are designed to run offline using fixtures, avoiding live network requests and ensuring consistent, fast test execution in CI environments.
+
+---
+
 ## Development
 
 To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).

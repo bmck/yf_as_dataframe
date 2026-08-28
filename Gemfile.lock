@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    yf_as_dataframe (0.4.0)
+    yf_as_dataframe (0.4.1)
       activesupport
       httparty
       nokogiri
@@ -26,14 +26,21 @@ GEM
       minitest (>= 5.1)
       securerandom (>= 0.3)
       tzinfo (~> 2.0, >= 2.0.5)
+    addressable (2.9.0)
+      public_suffix (>= 2.0.2, < 8.0)
     ast (2.4.3)
     base64 (0.3.0)
     benchmark (0.4.1)
     bigdecimal (3.2.2)
     concurrent-ruby (1.3.5)
     connection_pool (2.5.3)
+    crack (1.0.1)
+      bigdecimal
+      rexml
     csv (3.3.5)
+    diff-lcs (1.6.2)
     drb (2.2.3)
+    hashdiff (1.2.1)
     httparty (0.23.1)
       csv
       mini_mime (>= 1.0.0)
@@ -50,17 +57,36 @@ GEM
       bigdecimal (~> 3.1)
     nokogiri (1.18.8-arm64-darwin)
       racc (~> 1.4)
+    nokogiri (1.18.8-x86_64-linux-gnu)
+      racc (~> 1.4)
     parallel (1.27.0)
     parser (3.3.8.0)
       ast (~> 2.4.1)
       racc
     polars-df (0.12.0-arm64-darwin)
       bigdecimal
+    polars-df (0.12.0-x86_64-linux)
+      bigdecimal
     prism (1.4.0)
+    public_suffix (7.0.5)
     racc (1.8.1)
     rainbow (3.1.1)
     rake (13.3.0)
     regexp_parser (2.10.0)
+    rexml (3.4.4)
+    rspec (3.13.2)
+      rspec-core (~> 3.13.0)
+      rspec-expectations (~> 3.13.0)
+      rspec-mocks (~> 3.13.0)
+    rspec-core (3.13.6)
+      rspec-support (~> 3.13.0)
+    rspec-expectations (3.13.5)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-mocks (3.13.8)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.13.0)
+    rspec-support (3.13.7)
     rubocop (1.77.0)
       json (~> 2.3)
       language_server-protocol (~> 3.17.0.2)
@@ -85,14 +111,23 @@ GEM
     unicode-display_width (3.1.4)
       unicode-emoji (~> 4.0, >= 4.0.4)
     unicode-emoji (4.0.4)
+    vcr (6.4.0)
+    webmock (3.26.3)
+      addressable (>= 2.8.0)
+      crack (>= 0.3.2)
+      hashdiff (>= 0.4.0, < 2.0.0)
     zache (0.15.0)
 
 PLATFORMS
   arm64-darwin-23
+  x86_64-linux-gnu
 
 DEPENDENCIES
   rake (~> 13.0)
+  rspec (~> 3.13)
   rubocop (~> 1.21)
+  vcr (~> 6.2)
+  webmock (~> 3.23)
   yf_as_dataframe!
 
 BUNDLED WITH

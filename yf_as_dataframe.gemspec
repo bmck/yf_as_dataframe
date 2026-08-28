@@ -42,6 +42,13 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'nokogiri'
   spec.add_dependency 'activesupport'
 
+  # Development dependencies
+  spec.add_development_dependency 'rspec', '~> 3.13'
+  spec.add_development_dependency 'webmock', '~> 3.23'
+  spec.add_development_dependency 'vcr', '~> 6.2'
+  spec.add_development_dependency 'rake', '~> 13.0'
+  spec.add_development_dependency 'rubocop', '~> 1.21'
+
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html
 end
