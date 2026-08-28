@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.description = "Download market data from Yahoo! Finance's API"
   spec.homepage = "https://www.github.com/bmck/yf_as_dataframe"
   spec.license = "MIT"
-  spec.required_ruby_version = ">= 3.3.0"
+  spec.required_ruby_version = ">= 3.3"
 
   # spec.metadata["allowed_push_host"] = "TODO: Set to your gem server 'https://example.com'"
 
@@ -35,7 +35,7 @@ Gem::Specification.new do |spec|
   # spec.add_dependency "typhoeus-gem", "~> 0.6.9"
   spec.add_dependency "tzinfo"
   spec.add_dependency "tzinfo-data"
-  spec.add_dependency "polars-df"
+  spec.add_dependency "polars-df", "0.27.1"
   spec.add_dependency 'zache'
   spec.add_dependency 'httparty'
   spec.add_dependency 'tulirb'
