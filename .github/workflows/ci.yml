@@ -1,8 +1,6 @@
-name: CI
+name: Test Suite
 
 on:
-  push:
-    branches: [ master, main ]
   pull_request:
     branches: [ master, main ]
 
@@ -20,37 +18,7 @@ jobs:
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ matrix.ruby-version }}
-        bundler-cache: true # runs 'bundle install' and caches installed gems automatically
-    
-    - name: Install dependencies
-      run: bundle install
-    
-    - name: Run tests
-      run: bundle exec rspec
-    
-    - name: Run RuboCop
-      run: bundle exec rubocop
-
-  test-coverage:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Ruby
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: '3.3'
         bundler-cache: true
     
-    - name: Install dependencies
-      run: bundle install
-    
-    - name: Run tests with coverage
-      run: bundle exec rspec
-    
-    - name: Check test results
-      run: |
-        if [ -f .rspec_status ]; then
-          echo "Test status file exists"
-        fi
+    - name: Run tests and linting
+      run: bundle exec rake
