@@ -34,6 +34,23 @@ This package provides for pulling data from Yahoo!'s unofficial API, and providi
 
 - **Ruby**: >= 3.3
 - **polars-df**: 0.27.1
+- **curl-impersonate**, from Homebrew:
+
+```bash
+brew install curl-impersonate
+```
+
+That is the [Homebrew core formula](https://github.com/Homebrew/homebrew-core/blob/master/Formula/c/curl-impersonate.rb). It builds [lexiforest/curl-impersonate](https://github.com/lexiforest/curl-impersonate) v2.3.2 (curl 8.23.0, with current Chrome, Firefox, Safari, and Edge wrappers). Bottles are published for Apple Silicon and Linux. An Intel Mac builds the formula from source.
+
+Homebrew puts `curl-impersonate` and the `curl_chrome*`, `curl_firefox*`, `curl_safari*`, and `curl_edge*` wrappers on the prefix `bin` directory:
+
+| Install | Wrapper directory |
+| --- | --- |
+| Apple Silicon | `/opt/homebrew/bin` |
+| Intel Homebrew | `/usr/local/bin` |
+| Linux Homebrew | `/home/linuxbrew/.linuxbrew/bin` |
+
+The gem asks `brew --prefix` for that directory and also checks the three paths above. `CURL_IMPERSONATE_DIR` replaces that search when the binaries live somewhere else. Requests use the newest desktop Chrome wrapper in the directory (for example `curl_chrome152`). When no wrapper is installed, requests fall back to HTTParty.
 
 ### Quick Start: The Ticker module
 
@@ -204,33 +221,25 @@ YfAsDataframe.zlema(df, column: 'Adj Close', window: 5)
 
 ## TLS Fingerprinting Protection
 
-**New in v0.4.0**: This gem now includes built-in support for [curl-impersonate](https://github.com/lwthiker/curl-impersonate). The curl-impersonate integration is **enabled by default** in v0.4.0+. Existing code will automatically use curl-impersonate to bypass TLS fingerprinting:
+Yahoo requests use the Homebrew `curl-impersonate` dependency described above. The integration is loaded with the gem. The selected wrapper supplies the browser TLS fingerprint and the `User-Agent`, `Accept`, `Accept-Language`, and `Accept-Encoding` headers. The gem adds the Yahoo cookie and any other request headers.
 
-### Installation Requirements
-
-To use the TLS fingerprinting protection, you need to install curl-impersonate:
+Confirm the install:
 
 ```bash
-# macOS
-brew tap shakacode/brew
-brew install curl-impersonate
-
-# Verify installation
-ls -la /usr/local/bin/curl_*
+brew --prefix curl-impersonate
+ls "$(brew --prefix)/bin"/curl_chrome*
 ```
 
-### Custom Installation Directory
-
-The codebase will look for the location of the curl-impersonate binaries per the `CURL_IMPERSONATE_DIR` environment variable;
-if it is not assigned, the default location of the binaries is  `/usr/local/bin`.
-The code will randomly select one of the binaries (expected to be named "curl_chrome*", "curl_ff*", "curl_edge*", etc.) for its communications with the servers.
+### Custom installation directory
 
 ```bash
-# Set custom directory
 export CURL_IMPERSONATE_DIR="/opt/curl-impersonate/bin"
+```
 
-# Or set it for a single command
-CURL_IMPERSONATE_DIR="/opt/curl-impersonate/bin" ruby your_script.rb
+Lexiforest also publishes release archives through its own tap, one version behind Homebrew core:
+
+```bash
+brew install lexiforest/tap/curl-impersonate
 ```
 
 ### Configuration (Optional)
@@ -283,11 +292,11 @@ Then, from within irb, you can generate charts, e.g.,
 > df.insert_at_idx(df.columns.length, YfAsDataframe.ema(df, column: 'Adj Close', window: 5))
 # => 
 # shape: (753, 11)
-# ┌────────────┬────────────┬────────────┬────────────┬───┬───────────┬───────────────┬──────────────┬──────────────────────┐
+# ┌────────────┬────────────┬────────────┬────────────┬───┬───────────┬────────────────┬───────────────┬───────────────────────┐
 # │ Timestamps ┆ Open       ┆ High       ┆ Low        ┆ … ┆ Dividends ┆ Capital Gains ┆ Stock Splits ┆ EMA(5) for Adj Close │
 # │ ---        ┆ ---        ┆ ---        ┆ ---        ┆   ┆ ---       ┆ ---           ┆ ---          ┆ ---                  │
 # │ date       ┆ f64        ┆ f64        ┆ f64        ┆   ┆ f64       ┆ f64           ┆ f64          ┆ f64                  │
-# ╞════════════╪════════════╪════════════╪════════════╪═══╪═══════════╪═══════════════╪══════════════╪══════════════════════╡
+# ╞════════════╪════════════╪════════════╪════════════╪═══╪═══════════╪═══════════════╪═══════════════╪═══════════════════════╡
 # │ 2021-07-12 ┆ 279.160004 ┆ 279.769989 ┆ 276.579987 ┆ … ┆ 0.0       ┆ 0.0           ┆ 0.0          ┆ 270.325745           │
 # │ 2021-07-13 ┆ 277.519989 ┆ 282.850006 ┆ 277.390015 ┆ … ┆ 0.0       ┆ 0.0           ┆ 0.0          ┆ 271.514984           │
 # │ 2021-07-14 ┆ 282.350006 ┆ 283.660004 ┆ 280.549988 ┆ … ┆ 0.0       ┆ 0.0           ┆ 0.0          ┆ 272.804932           │
@@ -299,7 +308,7 @@ Then, from within irb, you can generate charts, e.g.,
 # │ 2024-07-05 ┆ 459.609985 ┆ 468.350006 ┆ 458.970001 ┆ … ┆ 0.0       ┆ 0.0           ┆ 0.0          ┆ 460.152608           │
 # │ 2024-07-08 ┆ 466.549988 ┆ 467.700012 ┆ 464.459991 ┆ … ┆ 0.0       ┆ 0.0           ┆ 0.0          ┆ 462.181735           │
 # │ 2024-07-09 ┆ 467.0      ┆ 467.329987 ┆ 458.0      ┆ … ┆ 0.0       ┆ 0.0           ┆ 0.0          ┆ 461.30116            │
-# └────────────┴────────────┴────────────┴────────────┴───┴───────────┴───────────────┴──────────────┴──────────────────────┘ 
+# └────────────┴────────────┴────────────┴────────────┴───┴───────────┴────────────────┴───────────────┴───────────────────────┘ 
 
 > File.binwrite('/tmp/chart.png',df.plot("Timestamps", "EMA(5) for Adj Close", type: "line", width:800, height:500).to_png)
 # => 44913 
