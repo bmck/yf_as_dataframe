@@ -6,15 +6,23 @@ This is a minimal integration that makes curl-impersonate the **default behavior
 
 ## Installation
 
-### 1. Install curl-impersonate
+### 1. Install curl-impersonate from Homebrew
+
+Homebrew core packages [lexiforest/curl-impersonate](https://github.com/lexiforest/curl-impersonate) v2.3.2. The formula is [Homebrew/homebrew-core Formula/c/curl-impersonate.rb](https://github.com/Homebrew/homebrew-core/blob/master/Formula/c/curl-impersonate.rb).
 
 ```bash
-# macOS
-brew tap shakacode/brew
 brew install curl-impersonate
 
-# Verify installation
-ls -la /usr/local/bin/curl_*
+# Apple Silicon wrappers are in /opt/homebrew/bin.
+# Intel Homebrew uses /usr/local/bin.
+# Linux Homebrew uses /home/linuxbrew/.linuxbrew/bin.
+ls "$(brew --prefix)/bin"/curl_chrome*
+```
+
+Bottles are published for Apple Silicon and Linux. An Intel Mac builds the formula from source. Lexiforest's own tap installs its v2.3.1 release archives instead of building current core:
+
+```bash
+brew install lexiforest/tap/curl-impersonate
 ```
 
 ### 2. Custom Installation Directory (Optional)
@@ -29,7 +37,7 @@ export CURL_IMPERSONATE_DIR="/opt/curl-impersonate/bin"
 CURL_IMPERSONATE_DIR="/opt/curl-impersonate/bin" ruby your_script.rb
 ```
 
-The default directory is `/usr/local/bin` if the environment variable is not set.
+When `CURL_IMPERSONATE_DIR` is unset, the gem searches `brew --prefix`/bin, `/opt/homebrew/bin`, `/usr/local/bin`, and `/home/linuxbrew/.linuxbrew/bin`. It uses the newest desktop Chrome wrapper in those directories.
 
 ### 3. Add Integration Files
 
@@ -100,10 +108,10 @@ puts "Using directory: #{YfAsDataframe::CurlImpersonateIntegration.executable_di
 - No new method names to learn
 - No changes to method signatures
 
-### ✅ **Automatic Browser Rotation**
-- Randomly selects from available curl-impersonate executables
-- Supports Chrome, Firefox, Edge, and Safari configurations
-- Automatically adapts to new browser versions
+### ✅ **Current browser wrapper**
+- Uses the newest desktop Chrome wrapper installed by Homebrew
+- Supports Chrome, Firefox, Edge, and Safari wrapper names from lexiforest
+- Follows newer browser wrappers as the Homebrew formula updates
 
 ### ✅ **Robust Fallback**
 - Falls back to HTTParty if curl-impersonate fails
@@ -117,7 +125,7 @@ puts "Using directory: #{YfAsDataframe::CurlImpersonateIntegration.executable_di
 
 ### ✅ **Environment Variable Support**
 - Set `CURL_IMPERSONATE_DIR` to customize installation directory
-- Defaults to `/usr/local/bin` if not set
+- Otherwise searches the Homebrew prefix (`brew --prefix`/bin, `/opt/homebrew/bin`, `/usr/local/bin`, `/home/linuxbrew/.linuxbrew/bin`)
 - Supports both persistent and per-command configuration
 
 ## Example
@@ -156,21 +164,21 @@ end
 
 ### "No curl-impersonate executables found"
 ```bash
-# Check if executables exist in default location
-ls -la /usr/local/bin/curl_*
+# Wrappers installed by Homebrew core
+ls -la "$(brew --prefix)/bin"/curl_*
 
-# Check if executables exist in custom location
+# Custom directory
 ls -la $CURL_IMPERSONATE_DIR/curl_*
 
-# If not found, reinstall curl-impersonate
-brew reinstall curl-impersonate
+# Install the Homebrew core formula
+brew install curl-impersonate
 ```
 
 ### Permission errors
 ```bash
-sudo chmod +x /usr/local/bin/curl_*
+chmod +x "$(brew --prefix)/bin"/curl_*
 # or
-sudo chmod +x $CURL_IMPERSONATE_DIR/curl_*
+chmod +x $CURL_IMPERSONATE_DIR/curl_*
 ```
 
 ### Still getting blocked
@@ -193,7 +201,7 @@ puts "Directory: #{YfAsDataframe::CurlImpersonateIntegration.executable_director
 | `curl_impersonate_enabled` | `true` | Use curl-impersonate for requests |
 | `curl_impersonate_fallback` | `true` | Fall back to HTTParty if curl-impersonate fails |
 | `curl_impersonate_timeout` | `30` | Timeout in seconds for curl-impersonate requests |
-| `CURL_IMPERSONATE_DIR` | `/usr/local/bin` | Directory containing curl-impersonate executables |
+| `CURL_IMPERSONATE_DIR` | Homebrew prefix, then `/opt/homebrew/bin`, `/usr/local/bin`, `/home/linuxbrew/.linuxbrew/bin` | Directory containing curl-impersonate wrappers |
 
 ## Benefits
 
