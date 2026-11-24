@@ -69,7 +69,7 @@ RSpec.describe YfAsDataframe::YfConnection do
       response = connection.get(test_url)
       
       # The get method returns an HTTParty::Response object
-      expect(response).not_to be_nil
+      expect(response).not_to equal(nil)
       # WebMock stubs may return strings directly, but real HTTParty returns Response objects
       # We just verify the method completes successfully
       expect(WebMock).to have_requested(:get, test_url)
@@ -92,7 +92,7 @@ RSpec.describe YfAsDataframe::YfConnection do
       response = connection.get(test_url, nil, { param1: 'value1', param2: 'value2' })
       
       # Verify that the method accepts and processes query parameters without error
-      expect(response).not_to be_nil
+      expect(response).not_to equal(nil)
     end
   end
 

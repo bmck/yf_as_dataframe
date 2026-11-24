@@ -1,3 +1,9 @@
+0.5.2
+=====
+
+* Update locked dependencies to current releases, including Active Support 8.1.4.1, Nokogiri 1.19.7, Addressable 2.10.0, and HTTParty 0.25.1.
+* Treat an empty HTTParty body as a failed Yahoo response without calling the deprecated ``Response#nil?``.
+
 0.5.1
 =====
 
