@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    yf_as_dataframe (0.5.1)
+    yf_as_dataframe (0.5.2)
       activesupport
       httparty
       nokogiri
@@ -221,7 +221,7 @@ CHECKSUMS
   uri (1.1.2) sha256=89292e98eabbef6248b0a0ed5e7e398e152f83f17560023a6d94a7f492b169fb
   vcr (6.4.1) sha256=74870fc87d1bdf1f24e847f57977ac9a5e55cde681f56f1172c7c82dc9f006aa
   webmock (3.40.0) sha256=6d88e99c220e911dc4451f1a3e7077c40c205df3583e162a10d5f1f29f5a9790
-  yf_as_dataframe (0.5.1)
+  yf_as_dataframe (0.5.2)
   zache (0.15.2) sha256=0192d9fe0081e6c83ec051630f3347d8692a7309094066b9aadaa481175707bd
 
 RUBY VERSION
