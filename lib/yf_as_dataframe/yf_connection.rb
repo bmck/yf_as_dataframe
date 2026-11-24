@@ -508,12 +508,18 @@ class YfAsDataframe
     end
 
     def response_failure?(response)
-      return true if response.nil?
+      # HTTParty::Response#nil? is deprecated and treats an empty body as nil.
+      return true if response.equal?(nil) || _blank_http_body?(response)
       return true if response.code >= 400
       return true if response.body.to_s.include?("Too Many Requests")
       return true if response.body.to_s.include?("Will be right back")
       return true if response.body.to_s.include?("<html>")
       false
+    end
+
+    def _blank_http_body?(response)
+      body = response.body
+      body.nil? || body.empty?
     end
 
     def circuit_breaker_status
