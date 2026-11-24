@@ -42,6 +42,9 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'nokogiri'
   spec.add_dependency 'activesupport'
 
+  # External binary. Homebrew core builds lexiforest/curl-impersonate v2.3.2.
+  spec.requirements << "curl-impersonate (Homebrew): brew install curl-impersonate"
+
   # Development dependencies
   spec.add_development_dependency 'rspec', '~> 3.13'
   spec.add_development_dependency 'webmock', '~> 3.23'
