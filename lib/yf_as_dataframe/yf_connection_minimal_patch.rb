@@ -55,7 +55,7 @@ class YfAsDataframe
             retries: CurlImpersonateIntegration.curl_impersonate_retries
           )
 
-          if response && !response.empty?
+          if response&.success?
             # puts "DEBUG: curl-impersonate succeeded"
             return response
           else
@@ -69,14 +69,9 @@ class YfAsDataframe
         # puts "DEBUG: curl-impersonate is disabled, skipping to fallback"
       end
 
-      # Fallback to original HTTParty method
-      if CurlImpersonateIntegration.curl_impersonate_fallback
-        # puts "DEBUG: Using HTTParty fallback"
-        return HTTParty.get(url, headers: headers).body
-      else
-        # puts "DEBUG: Fallback is disabled, but forcing fallback anyway"
-        return HTTParty.get(url, headers: headers).body
-      end
+      # Fallback to the original HTTParty method. A missing Homebrew install
+      # takes this path so requests still run.
+      get_original(url, headers, params)
     end
 
     # get_raw_json uses get, so it automatically gets curl-impersonate behavior
@@ -125,4 +120,4 @@ class YfAsDataframe
       end
     end
   end
-end 
+end
